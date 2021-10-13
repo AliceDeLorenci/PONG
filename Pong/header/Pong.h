@@ -10,8 +10,8 @@
 namespace Pong {
 
 	constexpr float PADDING = 10.0f;
-	constexpr int	DIV_SIZE = 6;
-	constexpr int BORDER = 1;
+	constexpr int32_t DIV_SIZE = 6;
+	constexpr int32_t BORDER = 1;
 
 	enum PlayerNum { PlayerOne, PlayerTwo };
 
@@ -19,18 +19,16 @@ namespace Pong {
 	private:
 		std::array<std::unique_ptr<Player::Player>, 2> players;
 		std::unique_ptr<Ball::Ball> ball;
-
 		std::array<int, 2> score;
+
+	private:
+		void DrawDivision();
 
 	public:
 		Pong();
 
 		bool OnUserCreate() override;
-
-		bool OnUserUpdate(float fElapsedTime) override;
-
-		void DrawDivision();
-
+		bool OnUserUpdate(float) override;
 	};
 
 }

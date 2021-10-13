@@ -7,11 +7,9 @@ namespace Pong {
 	}
 
 	bool Pong::OnUserCreate() {
-		
-		float ycoord = float(ScreenHeight())/ 2.0f - float(Player::Player::size.y) / 2.0f;
 
-		players[PlayerOne] = std::make_unique<Player::Player>( olc::vf2d( PADDING, ycoord ), *this );
-		players[PlayerTwo] = std::make_unique<Player::Player>( olc::vf2d( ScreenWidth() - PADDING - Player::Player::size.x, ycoord ), *this );
+		players[PlayerOne] = std::make_unique<Player::Player>(Player::PlayerOne, *this );
+		players[PlayerTwo] = std::make_unique<Player::Player>(Player::PlayerTwo, *this );
 
 		ball = std::make_unique<Ball::Ball>(*this);
 
@@ -21,12 +19,6 @@ namespace Pong {
 	}
 
 	bool Pong::OnUserUpdate(float fElapsedTime) {
-		// Clears the screen
-		Clear(olc::BLACK);
-
-		// Border
-		DrawRect(0, 0, ScreenWidth() - BORDER, ScreenHeight() - BORDER, olc::GREEN);
-
 		// User input
 		if (GetKey(olc::Key::W).bHeld)
 			players[PlayerOne]->Move( olc::vf2d(0, -Player::Player::speed * fElapsedTime) );
@@ -44,20 +36,24 @@ namespace Pong {
 		ball->Move(fElapsedTime);
 
 		// Checks whether the ball colided with the players
-		ball->CheckCollision(players[PlayerOne]->position, players[PlayerTwo]->position, score);
+		ball->CheckCollision(players[PlayerOne]->Position(), players[PlayerTwo]->Position(), score);
 
-		// Prints the score
+		// Clears the screen
+		Clear(olc::BLACK);
+
+		// Display the scenario
+		DrawRect(0, 0, ScreenWidth() - BORDER, ScreenHeight() - BORDER, olc::GREEN);
+		DrawDivision();
+
+		// Display the score
 		std::string scoreLine[2] = { std::string("Player 1: ") + std::to_string(score[PlayerOne]), std::string("Player 2: ") + std::to_string(score[PlayerTwo]) };
-		DrawString(ScreenWidth()/4 - GetTextSize(scoreLine[PlayerOne]).x, PADDING, scoreLine[PlayerOne], olc::GREEN, 2);
-		DrawString(3*ScreenWidth()/4 - GetTextSize(scoreLine[PlayerTwo]).x, PADDING, scoreLine[PlayerTwo], olc::GREEN, 2);
+		DrawString(ScreenWidth()/4 - GetTextSize(scoreLine[PlayerOne]).x, int32_t(PADDING), scoreLine[PlayerOne], olc::GREEN, 2);
+		DrawString(3*ScreenWidth()/4 - GetTextSize(scoreLine[PlayerTwo]).x, int32_t(PADDING), scoreLine[PlayerTwo], olc::GREEN, 2);
 
 		// Displays entities
-		DrawDivision();
 		players[PlayerOne]->Draw();
 		players[PlayerTwo]->Draw();
 		ball->Draw();
-
-		
 
 		return true;
 	}

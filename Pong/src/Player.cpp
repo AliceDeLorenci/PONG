@@ -3,25 +3,33 @@
 
 namespace Pong::Player{
 
-	const olc::vi2d Player::size = olc::vi2d( PLAYER_WIDTH, PLAYER_HEIGHT );	// bar size
-	const float Player::speed = PLAYER_SPEED;	// speed magnitude
+	const olc::vi2d Player::size = olc::vi2d( PLAYER_WIDTH, PLAYER_HEIGHT ); // bar size
+	const float Player::speed = PLAYER_SPEED; // speed magnitude
 
-	Player::Player( olc::vf2d initialPos, olc::PixelGameEngine& game ) : position(initialPos), pge(game) {}
+	Player::Player( const PlayerNum playerNumber, olc::PixelGameEngine& game ) : pge(game), number(playerNumber) {
+		if (number == PlayerOne) {
+			position = olc::vf2d(PADDING, pge.ScreenHeight() / 2.0f - size.y / 2.0f);
+		}
+		else {
+			position = olc::vf2d(pge.ScreenWidth() - PADDING - size.x, pge.ScreenHeight() / 2.0f - size.y / 2.0f);
+		}
+	}
 
-	void Player::Move( olc::vf2d displacement ) {
+	void Player::Move( const olc::vf2d& displacement ) {
 
 		position += displacement;
 
-		//Keeps the player within the arena
-		if ( position.y < float(BORDER) )
+		// Keeps the player within the arena
+		if (position.y < float(BORDER))
 			position.y = float(BORDER);
-		if ( position.y > pge.ScreenHeight() - float(BORDER) - size.y )
-			position.y = float( pge.ScreenHeight() - float(BORDER) - size.y );
+		if (position.y > float( pge.ScreenHeight() - BORDER - size.y ))
+			position.y = float( pge.ScreenHeight() - BORDER - size.y );
 
 	}
 
 	void Player::Draw() {
-		//Draw player on screen
-		pge.FillRect( int(position.x), int(position.y), size.x, size.y, olc::WHITE );
+		pge.FillRect( int32_t(position.x), int32_t(position.y), size.x, size.y, olc::WHITE );
 	}
+
+	const olc::vf2d& Player::Position() { return position; }
 }
