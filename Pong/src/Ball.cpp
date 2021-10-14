@@ -30,19 +30,14 @@ namespace Pong::Ball {
 		float fAngle = distAngle(mt) + distDirection(mt) * PI;
 		direction = olc::vf2d(cos(fAngle), sin(fAngle));
 
-		speed = INITIAL_SPEED;
+		curSpeed = INITIAL_SPEED;
 	}
 
 	void Ball::Move(float fElapsedTime) {
-		// Calculate new position
-		position += direction * speed * fElapsedTime;
+		position += direction * curSpeed * fElapsedTime;
 	}
 
-	void Ball::Draw() {
-		pge.FillRect(int(position.x), int(position.y), size.x, size.y, olc::WHITE);
-	}
-
-	void Ball::CheckCollision(olc::vf2d player1_position, olc::vf2d player2_position, std::array<int, 2>& score) {
+	void Ball::CheckCollision(const olc::vf2d& player1Pos, const olc::vf2d& player2Pos, std::array<int, 2>& score) {
 
 		auto testResolveCollision = [&](const olc::vf2d& player) {
 			if (position.x				< player.x + Player::Player::size.x &&
@@ -50,21 +45,25 @@ namespace Pong::Ball {
 				position.y				< player.y + Player::Player::size.y &&
 				position.y + size.y		> player.y) {
 
-				direction.x = (position.x > pge.ScreenWidth() / 2) ? -abs(direction.x) : abs(direction.x);
-				direction.y = (position.y + size.y / 2 > player.y + Player::Player::size.y / 2) ? -abs(direction.y) : abs(direction.y);
+				// angulo aleatorio:
+				float fAngle = distAngle(mt) + distDirection(mt) * PI;
+				direction = olc::vf2d(cos(fAngle), sin(fAngle));
+				direction.x = (position.x > pge.ScreenWidth() / 2.0f) ? -abs(direction.x) : abs(direction.x);
+
+				IncreaseSpeed();
 			}
-		}; 
-		
+		};
+
 		// Collision with the Player
-		testResolveCollision(player1_position);
-		testResolveCollision(player2_position);
+		testResolveCollision(player1Pos);
+		testResolveCollision(player2Pos);
 
 		// Collision with top and bottom borders
 		if (position.y <= float(BORDER)) {
 			position.y = float(BORDER);
 			direction.y = abs(direction.y);
 		}
-		else if (position.y >= pge.ScreenHeight() - float(BORDER) - size.y) {
+		else if (position.y >= float(pge.ScreenHeight() - BORDER - size.y)) {
 			position.y = float(pge.ScreenHeight() - float(BORDER) - size.y);
 			direction.y = -abs(direction.y);
 		}
@@ -80,10 +79,16 @@ namespace Pong::Ball {
 		}
 	}
 
-
-	void Ball::AdjustSpeed() {
-		speed *= 1.1f;
-		if(speed >= MAX_SPEED) speed = MAX_SPEED;
+	void Ball::IncreaseSpeed() {
+		curSpeed *= 1.1f;
+		curSpeed = (curSpeed <= MAX_SPEED) ? curSpeed : MAX_SPEED;
 	}
 
+	void Ball::Draw() {
+		pge.FillRect(int32_t(position.x), int32_t(position.y), size.x, size.y, olc::WHITE);
+	}
+
+	const olc::vf2d& Ball::Position() { return position; };
+	const olc::vf2d& Ball::Direction() { return direction; };
+	const float& Ball::CurSpeed() { return curSpeed; };
 }

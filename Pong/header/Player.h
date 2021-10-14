@@ -6,23 +6,29 @@
 
 namespace Pong::Player {
 
-	constexpr float PLAYER_SPEED = 200.0f;
-	constexpr int PLAYER_WIDTH = 8;
-	constexpr int PLAYER_HEIGHT = 35;
+	constexpr float PLAYER_SPEED = 300.0f;
+	constexpr int32_t PLAYER_WIDTH = 8;
+	constexpr int32_t PLAYER_HEIGHT = 35;
+
+	enum PlayerNum { PlayerOne, PlayerTwo };
 
 	class Player {
 	private:
 		olc::PixelGameEngine& pge;
-	public:
 		olc::vf2d position; 			// Anchor on top left corner
+		PlayerNum number;
+		
+	public:
 		static const olc::vi2d size;	// Player size in pixels
 		static const float speed;		// Player speed magnitude
 
-		Player(olc::vf2d initialPos, olc::PixelGameEngine& game);
+		Player(const PlayerNum playerNumber, olc::PixelGameEngine& game);
 
-		void Move(olc::vf2d displacement);	
-
+		void Move(const olc::vf2d&);
 		void Draw();
+
+		// Getters
+		const olc::vf2d& Position();
 	};
 }
 
