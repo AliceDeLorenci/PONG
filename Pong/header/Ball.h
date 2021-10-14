@@ -24,7 +24,7 @@ namespace Pong::Ball {
 
 		olc::vf2d position;		// Anchor on top left corner
 		olc::vf2d direction;	// Movement direction (normalized)
-		float curSpeed;			// Movement magnitude
+		float curSpeed;			// Speed magnitude
 
 	public:
 		/// Size in pixels

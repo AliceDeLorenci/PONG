@@ -12,23 +12,23 @@ namespace Pong::Ball {
 	Ball::Ball(olc::PixelGameEngine& game) : pge(game) {
 
 		// Set up all RNG related variables
-		distY = std::uniform_real_distribution<float>(0.0f, float(pge.ScreenHeight() - size.y));
-		distAngle = std::uniform_real_distribution<float>(-PI / 3.0f, PI / 3.0f);
-		distDirection = std::bernoulli_distribution(0.5);
+		distY = std::uniform_real_distribution<float>( 0.0f, float(pge.ScreenHeight() - size.y) );
+		distAngle = std::uniform_real_distribution<float>( -PI / 3.0f, PI / 3.0f );
+		distDirection = std::bernoulli_distribution( 0.5 );
 
 		// Starting position and speed
 		Reset();
 	}
 
-	// Reset ball position
+	// Reset ball position and speed
 	void Ball::Reset() {
 
 		// Middle of the screen with height ranging from 1/4 to 3/4 of the ScreenHeight()
-		position = olc::vf2d((pge.ScreenWidth() - size.x) / 2.0f, pge.ScreenHeight() / 4.0f + distY(mt) / 2.0f);
+		position = olc::vf2d( (pge.ScreenWidth() - size.x) / 2.0f, pge.ScreenHeight() / 4.0f + distY(mt) / 2.0f);
 
 		// Random direction in the range of (-60; 60) to (120, 240) degree
-		float fAngle = distAngle(mt) + distDirection(mt) * PI;
-		direction = olc::vf2d(cos(fAngle), sin(fAngle));
+		float fAngle = distAngle(mt) + float(distDirection(mt)) * PI;
+		direction = olc::vf2d( cos(fAngle), sin(fAngle) );
 
 		curSpeed = INITIAL_SPEED;
 	}
@@ -46,9 +46,9 @@ namespace Pong::Ball {
 				position.y + size.y		> player.y) {
 
 				// angulo aleatorio:
-				float fAngle = distAngle(mt) + distDirection(mt) * PI;
+				float fAngle = distAngle(mt) + float(distDirection(mt)) * PI;
 				direction = olc::vf2d(cos(fAngle), sin(fAngle));
-				direction.x = (position.x > pge.ScreenWidth() / 2.0f) ? -abs(direction.x) : abs(direction.x);
+				direction.x = (position.x > pge.ScreenWidth() / 2.0f) ? -std::abs(direction.x) : std::abs(direction.x);
 
 				IncreaseSpeed();
 			}
@@ -61,11 +61,11 @@ namespace Pong::Ball {
 		// Collision with top and bottom borders
 		if (position.y <= float(BORDER)) {
 			position.y = float(BORDER);
-			direction.y = abs(direction.y);
+			direction.y = std::abs(direction.y);
 		}
 		else if (position.y >= float(pge.ScreenHeight() - BORDER - size.y)) {
 			position.y = float(pge.ScreenHeight() - float(BORDER) - size.y);
-			direction.y = -abs(direction.y);
+			direction.y = -std::abs(direction.y);
 		}
 
 		// Collision with left and right borders (Score)
