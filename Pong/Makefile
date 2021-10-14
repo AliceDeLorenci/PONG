@@ -3,7 +3,7 @@ CC=g++		# change g++ to gcc when using C!
 
 DEFS=
 
-CFLAGS= $(DEFS) -g -Wall -std=c++17
+CFLAGS= $(DEFS) -g -Wall -Wno-unknown-pragmas -std=c++17
 
 # executable name
 EXEC= pong
