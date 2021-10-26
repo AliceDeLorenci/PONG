@@ -2,7 +2,7 @@
 
 int main() {
 
-    Pong::Server server;
+    Server::Server server;
 
 	return 0;
 }

@@ -1,13 +1,14 @@
 #include "../header/Server.h"
+#include <iostream>
 //#include <boost/asio/impl/src.hpp>
 
-namespace Pong::Server {
+namespace Server {
 
 	Server::Server() {
         // Allocate a UDP socket for the server
         if( ( my_socket = socket( AF_INET, SOCK_DGRAM, 0 ) ) < 0 ){
             perror("Socket creation failure.");
-            exit(EXIT_FAILURE);
+            //exit(EXIT_FAILURE);
         }      
 
         // Assign a port and IP address to the server socket
@@ -20,13 +21,13 @@ namespace Pong::Server {
     
         if( bind( my_socket, (struct sockaddr*)&addr, sizeof(addr) ) < 0 ){
             perror("Bind failed.");
-            exit(EXIT_FAILURE);
+            //exit(EXIT_FAILURE);
         }   
 
         // Socket on passive open mode
         listen( my_socket, 1 );   
 
         // debug
-        std::cout << "wainting client" << endl;
+        std::cout << "wainting client" << std::endl;
 	}
 }

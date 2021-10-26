@@ -11,7 +11,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-namespace Pong::Server {
+namespace Server {
 
     constexpr int SERVER_PORT = 1234;
 
@@ -22,7 +22,6 @@ namespace Pong::Server {
 
     public:
         Server();
-        AcceptClient();
     };
 }
 #endif  // SERVER_H
