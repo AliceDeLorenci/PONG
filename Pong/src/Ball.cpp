@@ -3,18 +3,16 @@
 #include "../header/Pong.h"
 
 namespace Pong::Ball {
-
 	std::random_device rd;
 	std::mt19937 mt(rd());
 
 	const olc::vi2d Ball::size = olc::vi2d(BALL_SIZE, BALL_SIZE);
 
 	Ball::Ball(olc::PixelGameEngine& game) : pge(game) {
-
 		// Set up all RNG related variables
-		distY = std::uniform_real_distribution<float>( 0.0f, float(pge.ScreenHeight() - size.y) );
-		distAngle = std::uniform_real_distribution<float>( -PI / 3.0f, PI / 3.0f );
-		distDirection = std::bernoulli_distribution( 0.5 );
+		distY = std::uniform_real_distribution<float>(0.0f, float(pge.ScreenHeight() - size.y));
+		distAngle = std::uniform_real_distribution<float>(-PI / 3.0f, PI / 3.0f);
+		distDirection = std::bernoulli_distribution(0.5);
 
 		// Starting position and speed
 		Reset();
@@ -22,13 +20,12 @@ namespace Pong::Ball {
 
 	// Reset ball position and speed
 	void Ball::Reset() {
-
 		// Middle of the screen with height ranging from 1/4 to 3/4 of the ScreenHeight()
-		position = olc::vf2d( (pge.ScreenWidth() - size.x) / 2.0f, pge.ScreenHeight() / 4.0f + distY(mt) / 2.0f);
+		position = olc::vf2d((pge.ScreenWidth() - size.x) / 2.0f, pge.ScreenHeight() / 4.0f + distY(mt) / 2.0f);
 
 		// Random direction in the range of (-60; 60) to (120, 240) degree
 		float fAngle = distAngle(mt) + float(distDirection(mt)) * PI;
-		direction = olc::vf2d( cos(fAngle), sin(fAngle) );
+		direction = olc::vf2d(cos(fAngle), sin(fAngle));
 
 		curSpeed = INITIAL_SPEED;
 	}
@@ -38,13 +35,11 @@ namespace Pong::Ball {
 	}
 
 	void Ball::CheckCollision(const olc::vf2d& player1Pos, const olc::vf2d& player2Pos, std::array<int, 2>& score) {
-
 		auto testResolveCollision = [&](const olc::vf2d& player) {
 			if (position.x				< player.x + Player::Player::size.x &&
 				position.x + size.x		> player.x &&
 				position.y				< player.y + Player::Player::size.y &&
 				position.y + size.y		> player.y) {
-
 				// angulo aleatorio:
 				float fAngle = distAngle(mt) + float(distDirection(mt)) * PI;
 				direction = olc::vf2d(cos(fAngle), sin(fAngle));

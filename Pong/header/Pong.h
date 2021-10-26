@@ -8,7 +8,6 @@
 #include <array>
 
 namespace Pong {
-
 	constexpr float PADDING = 10.0f;
 	constexpr int32_t DIV_SIZE = 6;
 	constexpr int32_t BORDER = 1;
@@ -30,8 +29,6 @@ namespace Pong {
 		bool OnUserCreate() override;
 		bool OnUserUpdate(float) override;
 	};
-
 }
 
 #endif // !PONG_H
-

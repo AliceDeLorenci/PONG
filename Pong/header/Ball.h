@@ -6,7 +6,6 @@
 #include <random>
 
 namespace Pong::Ball {
-
 	constexpr float PI = 3.14159265358979323846f;
 	constexpr float INITIAL_SPEED = 250.0f;
 	constexpr float MAX_SPEED = 750.0f;
