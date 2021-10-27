@@ -71,6 +71,9 @@ namespace Server {
                 constexpr size_t downIndex = playerIndex + 2;
                 bool down = static_cast<bool>(buffer[downIndex]);
                 
+                // DEBUG
+                std::cout << isPlayerOne << ", " << up << ", " << down << std::endl;
+
                 if( isPlayerOne ){
                     keys[W] = up;
                     keys[S] = down;

@@ -57,6 +57,7 @@ namespace Client {
         // Sends game configuration
         unsigned int len = sizeof( server_addr );
         if( sendto( my_socket, client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr *) &server_addr, len ) < 0 ){
+            std::cout << "ERRO" << std::endl;
             return 1;
         }
         

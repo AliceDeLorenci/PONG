@@ -38,7 +38,7 @@ namespace Server {
         std::thread thread_listen;                      // thread responsible for listening to clients
         std::array<std::thread, 2> thread_talk;         // threads responsible for talking to clients
         std::array<struct sockaddr_in, 2> clients;      // client addresses
-        std::array<bool, 4> keys;                       // 1 = held
+        std::array<bool, 4> keys = {0,0,0,0};           // 1 = held
 
     public:
         Server();
