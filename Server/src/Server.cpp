@@ -17,8 +17,6 @@ namespace Server {
         addr.sin_addr.s_addr = INADDR_ANY;
         memset( &addr.sin_zero, 0, sizeof(addr.sin_zero) );
 
-        std::cout << "PORT: " << addr.sin_port << std::endl;
-
         // Bind socket to port
         if( bind( my_socket, (struct sockaddr*)&addr, sizeof(addr) ) < 0 ){
             perror("Bind failed.");
@@ -35,8 +33,6 @@ namespace Server {
         int n = recvfrom( my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, 
                             ( struct sockaddr *) &( clients[client_num] ), &len );
         buffer[n] = '\0';
-
-        std::cout << "Client says: " << buffer << std::endl;
         
         if( strcmp( buffer, NEW_CLIENT ) )
             return 1;
@@ -62,10 +58,37 @@ namespace Server {
             char buffer[MAXLINE];
             unsigned int len = sizeof(client_addr);
             memset( &client_addr, 0, sizeof(client_addr) );
-            recvfrom( my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, ( struct sockaddr *) &client_addr, &len );
+            int n = recvfrom( my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, ( struct sockaddr *) &client_addr, &len );
             
-            std::cout << "Received: " << buffer << std::endl;
+            buffer[n] = '\0';
+            printf( "%s\n", buffer );
 
+            if( strncmp( INCOMING_KEYS, buffer, strlen( INCOMING_KEYS ) ) == 0 ){
+                char type[5];
+                int isPlayerOne;
+                int up;
+                int down;
+
+                sscanf( buffer, "%s %d %d %d", type, &isPlayerOne, &up, &down );
+                
+                //bool isPlayerOne = atoi( &( buffer[ strlen( INCOMING_KEYS ) ] ) );
+                //bool up = atoi( &( buffer[ strlen( INCOMING_KEYS )+1 ] ) );
+                //bool down = atoi( &( buffer[ strlen( INCOMING_KEYS )+2 ] ) );
+
+                if( up | down ){
+                    printf( "UP: %d - DOWN: %d\n", up, down );
+                }
+                
+                if( isPlayerOne ){
+                    keys[W] = up;
+                    keys[S] = down;
+                }else{
+                    keys[UP] = up;
+                    keys[DOWN] = down;
+                }
+            }
+
+            /*
             std::string buf(buffer);
             if( buf.compare( 0, INCOMING_KEYS.length(), INCOMING_KEYS ) == 0 ){
 
@@ -77,10 +100,11 @@ namespace Server {
                 
                 constexpr size_t downIndex = playerIndex + 2;
                 bool down = static_cast<bool>(buffer[downIndex]);
-                
-                // DEBUG
-                std::cout << isPlayerOne << ", " << up << ", " << down << std::endl;
 
+                if( up | down ){
+                    printf( "UP: %d - DOWN: %d\n", up, down );
+                }
+                
                 if( isPlayerOne ){
                     keys[W] = up;
                     keys[S] = down;
@@ -90,6 +114,7 @@ namespace Server {
                 }
                 
             }
+            */
         }
         
     }

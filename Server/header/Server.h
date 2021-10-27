@@ -26,7 +26,8 @@ namespace Server {
     constexpr int MAXLINE = 1024;
 
     static constexpr const char* NEW_CLIENT = "WHO AM I";
-    static constexpr std::string_view INCOMING_KEYS = "KEYS";
+    //static constexpr std::string_view INCOMING_KEYS = "KEYS";
+    static constexpr const char* INCOMING_KEYS = "KEYS";
 
     enum ClientNum { ClientOne, ClientTwo };
     enum KeyPlayer { W, S, UP, DOWN };

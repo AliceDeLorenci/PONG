@@ -22,11 +22,6 @@ namespace Client {
 
     int Client::Connect() {
             char buffer[MAXLINE];
-            
-            // Joins game
-            std::cout << server_addr.sin_family << std::endl;
-            std::cout << server_addr.sin_port << std::endl;
-            std::cout << server_addr.sin_addr.s_addr << std::endl;
 
             unsigned int len = sizeof(server_addr);
             sendto( my_socket, (const char *) CONNECT_HANDSHAKE, strlen(CONNECT_HANDSHAKE), MSG_CONFIRM, 
@@ -38,7 +33,6 @@ namespace Client {
             
             buffer[n] = '\0';
             player_num = atoi( buffer );
-            std::cout << "I am: " << player_num << std::endl;
         
             return 0;
     }
@@ -52,12 +46,7 @@ namespace Client {
         
         while(true) {
             unsigned int len = sizeof(server_addr);
-
-            //std::cout << "Waiting for message..." << std::endl;
-
             recvfrom( my_socket, &msg, sizeof(struct game_info), MSG_WAITALL, ( struct sockaddr *) &server_addr, &len );
-           
-            //std::cout << msg.xPlayer1 << std::endl;
         }
         
     }
@@ -69,20 +58,14 @@ namespace Client {
         // montar string
         char client_msg[MAXLINE];
 
-        //std::cout << "UP: " << keys[UP] << " - DOWN: " << keys[DOWN] << std::endl;
+        sprintf( client_msg, "KEYS %d %d %d", player_num, keys[UP], keys[DOWN] );
 
-        sprintf( client_msg, "KEYS%d%d%d", player_num, keys[UP], keys[DOWN] );
+        if( keys[UP] || keys[DOWN] ){
+            printf("UP: %d - DOWN: %d\n", keys[UP], keys[DOWN] );
+        }
 
-        //std::cout << "Try to say: " << client_msg << std::endl;
-
-        //std::cout << "Server port: " << server_addr.sin_port << std::endl;
 
         // Sends game configuration
-
-        std::cout << server_addr.sin_family << std::endl;
-        std::cout << server_addr.sin_port << std::endl;
-        std::cout << server_addr.sin_addr.s_addr << std::endl;
-
         unsigned int len = sizeof( server_addr );
         if( sendto( my_socket, (const char *) client_msg, strlen(client_msg), MSG_CONFIRM, 
                     (const struct sockaddr *) &server_addr, len ) < 0 ){
@@ -90,8 +73,6 @@ namespace Client {
             perror( "Error sending msg\n" );
             return 1;
         }
-        
-        std::cout << "SUCESSO" << std::endl;
         return 0;
     }
     

@@ -24,17 +24,25 @@ namespace Pong {
 
 	bool Pong::OnUserUpdate(float fElapsedTime) {
 		// User input
-		if ( server.GetKey( Server::W ) )
+		if ( server.GetKey( Server::W ) ){
 			players[PlayerOne]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
+			//std::cout << "W\n";
+		}
 
-		if ( server.GetKey( Server::S ) )
+		if ( server.GetKey( Server::S ) ){
 			players[PlayerOne]->Move(olc::vf2d(0, +Player::Player::speed * fElapsedTime));
+			//std::cout << "S\n";
+		}
 
-		if ( server.GetKey( Server::UP ) )
+		if ( server.GetKey( Server::UP ) ){
 			players[PlayerTwo]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
+			//std::cout << "UP\n";
+		}
 
-		if ( server.GetKey( Server::DOWN ) )
+		if ( server.GetKey( Server::DOWN ) ){
 			players[PlayerTwo]->Move(olc::vf2d(0, +Player::Player::speed * fElapsedTime));
+			//std::cout << "DOWN\n";
+		}
 
 		// Moves the ball
 		ball->Move(fElapsedTime);
