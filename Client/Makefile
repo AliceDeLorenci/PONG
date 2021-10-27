@@ -19,11 +19,11 @@ CDIR = src
 ODIR = build
 
 # list of header files
-_DEPS = Server.h Ball.h olcPixelGameEngine.h Player.h Ball.h Pong.h
+_DEPS = Client.h Ball.h olcPixelGameEngine.h Player.h Ball.h Pong.h
 DEPS = $(patsubst %,$(HDIR)/%,$(_DEPS))
 
 # list of source code files ( replacing the .c/.cpp extension with .o )
-_OBJ = olcPixelGameEngine.o Player.o Ball.o Pong.o Server.o main.o
+_OBJ = olcPixelGameEngine.o Player.o Ball.o Pong.o Client.o main.o
 OBJ = $(patsubst %, $(ODIR)/%,$(_OBJ))
 
 # used to create the build directory if it doesn't exist
