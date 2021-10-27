@@ -14,6 +14,8 @@ namespace Client {
             server_addr.sin_family = AF_INET;
             server_addr.sin_port = htons(SERVER_PORT);
             server_addr.sin_addr.s_addr = INADDR_ANY;
+
+            memset( &msg, 0, sizeof(msg) );
     }
 
     int Client::Connect() {

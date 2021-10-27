@@ -16,6 +16,15 @@ namespace Pong {
 
 		score = { 0, 0 };
 
+		client.msg.xPlayer1 = players[PlayerOne]->Position().x;
+		client.msg.yPlayer1 = players[PlayerOne]->Position().y;
+		client.msg.xPlayer2 = players[PlayerTwo]->Position().x;
+		client.msg.yPlayer2 = players[PlayerTwo]->Position().y;
+		client.msg.xBall = ball->Position().x;
+		client.msg.yBall = ball->Position().y;
+		client.msg.scorePlayer1 = 0;
+		client.msg.scorePlayer2 = 0;
+
 		return true;
 	}
 
