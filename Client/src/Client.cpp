@@ -1,5 +1,7 @@
 #include "../header/Client.h"
 
+#include <errno.h>
+
 namespace Client {
 
 	Client::Client() {
@@ -22,6 +24,10 @@ namespace Client {
             char buffer[MAXLINE];
             
             // Joins game
+            std::cout << server_addr.sin_family << std::endl;
+            std::cout << server_addr.sin_port << std::endl;
+            std::cout << server_addr.sin_addr.s_addr << std::endl;
+
             unsigned int len = sizeof(server_addr);
             sendto( my_socket, (const char *) CONNECT_HANDSHAKE, strlen(CONNECT_HANDSHAKE), MSG_CONFIRM, 
                     (const struct sockaddr *) &server_addr, len );
@@ -34,7 +40,6 @@ namespace Client {
             player_num = atoi( buffer );
             std::cout << "I am: " << player_num << std::endl;
         
-            close(my_socket);
             return 0;
     }
 
@@ -51,7 +56,7 @@ namespace Client {
             //std::cout << "Waiting for message..." << std::endl;
 
             recvfrom( my_socket, &msg, sizeof(struct game_info), MSG_WAITALL, ( struct sockaddr *) &server_addr, &len );
-            
+           
             //std::cout << msg.xPlayer1 << std::endl;
         }
         
@@ -59,6 +64,8 @@ namespace Client {
 
     int Client::SendKeys(){
     
+        errno = 0;
+
         // montar string
         char client_msg[MAXLINE];
 
@@ -71,11 +78,16 @@ namespace Client {
         //std::cout << "Server port: " << server_addr.sin_port << std::endl;
 
         // Sends game configuration
+
+        std::cout << server_addr.sin_family << std::endl;
+        std::cout << server_addr.sin_port << std::endl;
+        std::cout << server_addr.sin_addr.s_addr << std::endl;
+
         unsigned int len = sizeof( server_addr );
-        if( sendto( my_socket, client_msg, strlen(client_msg), MSG_CONFIRM, 
+        if( sendto( my_socket, (const char *) client_msg, strlen(client_msg), MSG_CONFIRM, 
                     (const struct sockaddr *) &server_addr, len ) < 0 ){
             
-            std::cout << "ERRO" << std::endl;
+            perror( "Error sending msg\n" );
             return 1;
         }
         
