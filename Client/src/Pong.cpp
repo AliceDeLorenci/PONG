@@ -8,6 +8,7 @@ namespace Pong {
 	bool Pong::OnUserCreate() {
 
 		client.Connect();
+		client.StartListening();
 
 		players[PlayerOne] = std::make_unique<Player::Player>(Player::PlayerOne, *this);
 		players[PlayerTwo] = std::make_unique<Player::Player>(Player::PlayerTwo, *this);

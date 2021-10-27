@@ -4,7 +4,7 @@ namespace Client {
 
 	Client::Client() {
             // Allocate a UDP socket for the client
-            if ( (my_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+            if ( ( my_socket = socket(AF_INET, SOCK_DGRAM, 0) ) < 0 ) {
                 perror("Socket creation failure.");
                 exit(EXIT_FAILURE);
             }
@@ -22,15 +22,17 @@ namespace Client {
             char buffer[MAXLINE];
             
             // Joins game
-            sendto( my_socket, (const char *) CONNECT_HANDSHAKE, strlen(CONNECT_HANDSHAKE), MSG_CONFIRM, (const struct sockaddr *) &server_addr, sizeof(server_addr) );
+            unsigned int len = sizeof(server_addr);
+            sendto( my_socket, (const char *) CONNECT_HANDSHAKE, strlen(CONNECT_HANDSHAKE), MSG_CONFIRM, 
+                    (const struct sockaddr *) &server_addr, len );
             
             // Receives player number
-            unsigned int len = sizeof(server_addr);
+            len = sizeof(server_addr);
             int n = recvfrom(my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, (struct sockaddr *) &server_addr, &len);
             
             buffer[n] = '\0';
             player_num = atoi( buffer );
-            std::cout << "Server: " << buffer << std::endl;
+            std::cout << "I am: " << player_num << std::endl;
         
             close(my_socket);
             return 0;
@@ -45,8 +47,14 @@ namespace Client {
         
         while(true) {
             unsigned int len = sizeof(server_addr);
+
+            //std::cout << "Waiting for message..." << std::endl;
+
             recvfrom( my_socket, &msg, sizeof(struct game_info), MSG_WAITALL, ( struct sockaddr *) &server_addr, &len );
+            
+            //std::cout << msg.xPlayer1 << std::endl;
         }
+        
     }
 
     int Client::SendKeys(){
@@ -54,15 +62,24 @@ namespace Client {
         // montar string
         char client_msg[MAXLINE];
 
+        //std::cout << "UP: " << keys[UP] << " - DOWN: " << keys[DOWN] << std::endl;
+
         sprintf( client_msg, "KEYS%d%d%d", player_num, keys[UP], keys[DOWN] );
+
+        //std::cout << "Try to say: " << client_msg << std::endl;
+
+        //std::cout << "Server port: " << server_addr.sin_port << std::endl;
 
         // Sends game configuration
         unsigned int len = sizeof( server_addr );
-        if( sendto( my_socket, client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr *) &server_addr, len ) < 0 ){
+        if( sendto( my_socket, client_msg, strlen(client_msg), MSG_CONFIRM, 
+                    (const struct sockaddr *) &server_addr, len ) < 0 ){
+            
             std::cout << "ERRO" << std::endl;
             return 1;
         }
         
+        std::cout << "SUCESSO" << std::endl;
         return 0;
     }
     

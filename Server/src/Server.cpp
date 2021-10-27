@@ -17,7 +17,9 @@ namespace Server {
         addr.sin_addr.s_addr = INADDR_ANY;
         memset( &addr.sin_zero, 0, sizeof(addr.sin_zero) );
 
-    
+        std::cout << "PORT: " << addr.sin_port << std::endl;
+
+        // Bind socket to port
         if( bind( my_socket, (struct sockaddr*)&addr, sizeof(addr) ) < 0 ){
             perror("Bind failed.");
             exit(EXIT_FAILURE);
@@ -29,11 +31,12 @@ namespace Server {
         
         // Accepts a client and saves its address for future reference
         char buffer[MAXLINE];
-        unsigned len = sizeof( &clients[client_num] );
-        int n = recvfrom(my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, ( struct sockaddr *) &clients[client_num], &len );
+        unsigned len = sizeof( &( clients[client_num] ) );
+        int n = recvfrom( my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, 
+                            ( struct sockaddr *) &( clients[client_num] ), &len );
         buffer[n] = '\0';
 
-        std::cout << "Client: " << buffer << std::endl;
+        std::cout << "Client says: " << buffer << std::endl;
         
         if( strcmp( buffer, NEW_CLIENT ) )
             return 1;
@@ -41,7 +44,8 @@ namespace Server {
         // Says which player the client is
         const char* client_msg = std::to_string(client_num).c_str();
 
-        sendto( my_socket, client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr *) &clients[client_num], len );
+        sendto( my_socket, client_msg, strlen(client_msg), MSG_CONFIRM, 
+                (const struct sockaddr *) &( clients[client_num] ), len );
         return 0;
     }
 
@@ -57,8 +61,11 @@ namespace Server {
         while(true) {
             char buffer[MAXLINE];
             unsigned int len = sizeof(client_addr);
+            memset( &client_addr, 0, sizeof(client_addr) );
             recvfrom( my_socket, (char *) buffer, MAXLINE, MSG_WAITALL, ( struct sockaddr *) &client_addr, &len );
             
+            std::cout << "Received: " << buffer << std::endl;
+
             std::string buf(buffer);
             if( buf.compare( 0, INCOMING_KEYS.length(), INCOMING_KEYS ) == 0 ){
 
