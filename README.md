@@ -2,7 +2,8 @@
 
 Para compilar, basta criar uma pasta build e utilizar o CMake.
 
-    mkdir build 
+    mkdir build
+    cd build
     cmake ..
     make
 
