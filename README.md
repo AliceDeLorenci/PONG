@@ -1,22 +1,20 @@
 # Como compilar
 
-Terminal 1 - Diretório *Server*
+Para compilar, basta criar uma pasta build e utilizar o CMake.
 
-    make 
-    make run
+    mkdir build 
+    cmake ..
+    make
 
-Terminal 2 - Diretório *Client*
+Após isso, basta executar o servidor e os clientes com
+
+    ./Server
+    ./Client
+
+Também é possível jogar Offline:
+
+    ./Offline
     
-    make EXEC=client1
-    make run EXEC=client1
-
-Terminal 3 - Diretório *Client*
-
-    make EXEC=client2
-    make run EXEC=client2
-
-**OBS:** Não sei porque, mas dá uns erros estranhos no socket quando só roda duas vezes o mesmo executável.
-
 # Protocolo
 
 **Cliente** tenta conectar servidor para participar do jogo:
