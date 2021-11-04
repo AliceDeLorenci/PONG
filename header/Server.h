@@ -37,27 +37,41 @@ namespace Pong::Network::Server {
 
 	class Server {
 	private:
-		int my_socket;  // server socket
-		std::thread thread_listen;                      // thread responsible for listening to clients
-		std::array<std::thread, 2> thread_talk;         // threads responsible for talking to clients
+		int udp_socket;  								// socket for communicating game information
+		int tcp_socket;									// socket for communicating server information
+		std::thread udp_thread_listen;                  // thread responsible for listening to clients (udp connection)
+		std::thread tcp_thread_listen;                  // thread responsible for listening to clients (tcp connection)
 		std::array<struct sockaddr_in, 2> clients;      // client addresses
 		std::array<bool, 4> keys = { 0,0,0,0 };         // 1 = held
+		
 		std::string ip;
-		std::string port;
-		bool quit;	// quit flag, set when a client starts the quitting process
+		int port;
+		
+		bool client_quit;  								// quit flag, set when a client starts the quitting process
+		bool quit_listener;								// used to quit the listener thread
+		bool quit;		 								// general quit flag
 
 	public:
-		Server(const std::string& ServerIp = "localhost", const std::string& ServerPort = "1234");
+		Server(const std::string& ServerIp = "127.0.0.1", const std::string& ServerPort = "1234");
 		virtual ~Server();
-		int AcceptClient(int);    	// Clients join game
-		void StartListening();      // Starts thread running Listen()
-		void Listen();             	// Listen for client input
-		int SendPosition(int);    	// Sends position to clients
-		bool GetKey(int);
-		int AnnounceEnd( int );
-		bool GetQuit();
 
-		Pong::Network::GameInfo::GameInfo msg; // Message sent to client
+		int CreateUDPConnection();
+		int CreateTCPConnection();
+
+		int AcceptClient(int);    						// Clients join game
+
+		void StartListeningUDP();      					// Starts thread running Listen()
+		void ListenUDP();             					// Listen for client input
+		int SendPosition(int);    						// Sends position to clients
+		bool GetKey(int);								// Receive client key
+
+		bool GetQuit();
+		bool GetClientQuit();
+		
+		int AnnounceEnd( int );							// Warns every client to quit
+		void QuitListener();							// Sets the quit_listener flag
+
+		Pong::Network::GameInfo::GameInfo msg; 			// Message sent to client
 	};
 }
 #endif  // SERVER_H

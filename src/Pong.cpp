@@ -10,7 +10,7 @@ namespace Pong {
 		while (server.AcceptClient(Network::Server::ClientOne)) {}
 		while (server.AcceptClient(Network::Server::ClientTwo)) {}
 
-		server.StartListening();
+		server.StartListeningUDP();
 
 		Init();
 
@@ -19,7 +19,7 @@ namespace Pong {
 
 	bool Pong::OnUserUpdate(float fElapsedTime) {
 
-		// When OnUserUpdate returns false the PixelGameEngine exits
+		// When OnUserUpdate returns false the PixelGameEngine exits (calls on UserDestroy)
 		if( server.GetQuit() ){
 			// Perhaps print a message on the screen and wait for some user action
 			return false;
@@ -72,11 +72,15 @@ namespace Pong {
 	***/
 	bool Pong::OnUserDestroy(){
 		
-		if( !server.GetQuit() ){	// Meaning that the action started with the server
+		server.QuitListener();
+
+		//if( !server.GetClientQuit() ){	// Meaning that the quitting action truly started with the server
+			
 			// For now the methods don't ensure that the message was received
 			server.AnnounceEnd( Network::Server::ClientOne );
 			server.AnnounceEnd( Network::Server::ClientTwo );
-		}
+
+		//}
 		return true;
 	}
 
@@ -89,7 +93,7 @@ namespace Pong {
 
 	bool Pong::OnUserCreate() {
 		client.Connect();
-		client.StartListening();
+		client.StartListeningUDP();
 
 		Init();
 
@@ -153,7 +157,10 @@ namespace Pong {
 	***/
 	bool Pong::OnUserDestroy(){
 		
-		if( !client.GetQuit() ){
+		client.QuitListener();
+
+		if( !client.GetServerQuit() ){	// the quitting action truly started with the client
+			client.AnnounceEnd();
 		}
 		return true;
 	}

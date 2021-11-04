@@ -33,3 +33,10 @@ Também é possível jogar Offline:
 **Servidor** envia configuração:
 
 "CONF <xPlayer1> <yPlayer1> <xPlayer2> <yPlayer2> <xBall> <yBall> <scorePlayer1> <scorePlayer2>"
+
+# Quitting
+
+User quits on Server:
+- ```(Server) OnUserDestroy()```: sends messages to clients announcing exit
+- ```(Server) listener thread```: end
+- ```(Clinet) OnUserUpdate()```: return false 

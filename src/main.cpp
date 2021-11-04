@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
 
 	std::unique_ptr<Pong::Pong> pong;
 	if(argc == 2) {
-		pong = std::make_unique<Pong::Pong>("localhost", argv[1]);
+		pong = std::make_unique<Pong::Pong>("127.0.0.1", argv[1]);
 	}
 	else if(argc == 1) {
 		pong = std::make_unique<Pong::Pong>();
@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
 		std::cout << "Usage: ./Server <port>" << std::endl;
 	}
 
-	if (pong->Construct(100, 100, 2, 2)) { // Tela de tamanho 100x100 com 'pixels' formado por 2x2 pixels
+	if (pong->Construct(640, 320, 2, 2)) { // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
 		pong->Start();
 	}
 	

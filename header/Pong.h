@@ -30,7 +30,7 @@ namespace Pong {
 
 #if SERVER || CLIENT
 	public:
-		Pong(const std::string& ServerIp = "localhost", const std::string& ServerPort = "1234");
+		Pong(const std::string& ServerIp = "127.0.0.1", const std::string& ServerPort = "1234");
 		bool OnUserDestroy() override;	// called when the user clicks the exit button
 #else
 	public:
