@@ -1649,8 +1649,7 @@ namespace olc
 		olc_ConfigureSystem();
 	}
 
-	PixelGameEngine::~PixelGameEngine()
-	{}
+	PixelGameEngine::~PixelGameEngine()	{}
 
 	olc::rcode PixelGameEngine::Construct(int32_t screen_w, int32_t screen_h, int32_t pixel_w, int32_t pixel_h, bool full_screen, bool vsync, bool cohesion)
 	{

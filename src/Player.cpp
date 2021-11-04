@@ -13,6 +13,7 @@ namespace Pong::Player {
 			position = olc::vf2d(pge.ScreenWidth() - PADDING - size.x, pge.ScreenHeight() / 2.0f - size.y / 2.0f);
 		}
 	}
+	Player::~Player() {}
 
 	void Player::Move(const olc::vf2d& displacement) {
 		position += displacement;

@@ -5,6 +5,7 @@
 
 namespace Pong::Network::GameInfo {
 	struct GameInfo {
+		char type[5];
 		int xPlayer1;
 		int yPlayer1;
 		int xPlayer2;

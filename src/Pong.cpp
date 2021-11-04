@@ -2,7 +2,7 @@
 
 namespace Pong {
 #if SERVER
-	Pong::Pong() {
+	Pong::Pong(const std::string& ServerIp, const std::string& ServerPort) : server(ServerIp, ServerPort) {
 		sAppName = "Pong -- Server";
 	}
 
@@ -18,6 +18,13 @@ namespace Pong {
 	}
 
 	bool Pong::OnUserUpdate(float fElapsedTime) {
+
+		// When OnUserUpdate returns false the PixelGameEngine exits
+		if( server.GetQuit() ){
+			// Perhaps print a message on the screen and wait for some user action
+			return false;
+		}
+
 		// User input
 		if (server.GetKey(Network::Server::W)) {
 			players[PlayerOne]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
@@ -59,9 +66,24 @@ namespace Pong {
 
 		return true;
 	}
+	
+	/***
+	 * Called when the user clicks the exit button. Announces to the clients that the game has ended.
+	***/
+	bool Pong::OnUserDestroy(){
+		
+		if( !server.GetQuit() ){	// Meaning that the action started with the server
+			// For now the methods don't ensure that the message was received
+			server.AnnounceEnd( Network::Server::ClientOne );
+			server.AnnounceEnd( Network::Server::ClientTwo );
+		}
+		return true;
+	}
+
+	
 
 #elif CLIENT
-	Pong::Pong() {
+	Pong::Pong(const std::string& ServerIp, const std::string& ServerPort) : client(ServerIp, ServerPort) {
 		sAppName = "Pong -- Client";
 	}
 
@@ -84,6 +106,13 @@ namespace Pong {
 	}
 
 	bool Pong::OnUserUpdate(float fElapsedTime) {
+
+		// When OnUserUpdate returns false the PixelGameEngine exits
+		if( client.GetQuit() ){
+			// Perhaps print a message on the screen and wait for some user action
+			return false;
+		}
+
 		// User input
 		client.SetKey(Network::Client::UP, GetKey(olc::Key::UP).bHeld);
 		client.SetKey(Network::Client::DOWN, GetKey(olc::Key::DOWN).bHeld);
@@ -117,6 +146,16 @@ namespace Pong {
 		ball->SetPosition(client.msg.xBall, client.msg.yBall);
 		score[PlayerOne] = client.msg.scorePlayer1;
 		score[PlayerTwo] = client.msg.scorePlayer2;
+	}
+
+	/***
+	 * Called when the user clicks the exit button. Announces to the server that the game has ended.
+	***/
+	bool Pong::OnUserDestroy(){
+		
+		if( !client.GetQuit() ){
+		}
+		return true;
 	}
 
 #else
@@ -171,6 +210,8 @@ namespace Pong {
 	}
 #endif
 
+	Pong::~Pong() {}
+	
 	void Pong::Init() {
 		players[PlayerOne] = std::make_unique<Player::Player>(Player::PlayerOne, *this);
 		players[PlayerTwo] = std::make_unique<Player::Player>(Player::PlayerTwo, *this);
@@ -179,6 +220,7 @@ namespace Pong {
 
 		score = { 0, 0 };
 	}
+	
 	void Pong::DrawDivision() {
 		int n = int(float(ScreenHeight()) / float(DIV_SIZE));
 		int x = ScreenWidth() / 2 - DIV_SIZE / 4;

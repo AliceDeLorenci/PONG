@@ -22,6 +22,7 @@ namespace Pong::Player {
 		static const float speed;		// Player speed magnitude
 
 		Player(const PlayerNum playerNumber, olc::PixelGameEngine& game);
+		virtual ~Player();
 
 		void Move(const olc::vf2d&);
 		void Draw();

@@ -17,6 +17,7 @@ namespace Pong::Ball {
 		// Starting position and speed
 		Reset();
 	}
+	Ball::~Ball() {}
 
 	// Reset ball position and speed
 	void Ball::Reset() {

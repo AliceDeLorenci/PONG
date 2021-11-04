@@ -35,6 +35,7 @@ namespace Pong::Ball {
 
 	public:
 		Ball(olc::PixelGameEngine&);
+		virtual ~Ball();
 
 		void Move(float);
 		void CheckCollision(const olc::vf2d&, const olc::vf2d&, std::array<int, 2>&);
@@ -48,6 +49,7 @@ namespace Pong::Ball {
 
 		// Setters
 		void SetPosition(int, int);
+
 	};
 }
 

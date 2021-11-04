@@ -29,6 +29,8 @@ namespace Pong::Network::Server {
 	static constexpr const char* NEW_CLIENT = "WHO AM I";
 	//static constexpr std::string_view INCOMING_KEYS = "KEYS";
 	static constexpr const char* INCOMING_KEYS = "KEYS";
+	static constexpr const char* OUTGOING_POSITION = "CONF";
+	static constexpr const char* USER_DESTROY = "EXIT";
 
 	enum ClientNum { ClientOne, ClientTwo };
 	enum KeyPlayer { W, S, UP, DOWN };
@@ -39,15 +41,21 @@ namespace Pong::Network::Server {
 		std::thread thread_listen;                      // thread responsible for listening to clients
 		std::array<std::thread, 2> thread_talk;         // threads responsible for talking to clients
 		std::array<struct sockaddr_in, 2> clients;      // client addresses
-		std::array<bool, 4> keys = { 0,0,0,0 };           // 1 = held
+		std::array<bool, 4> keys = { 0,0,0,0 };         // 1 = held
+		std::string ip;
+		std::string port;
+		bool quit;	// quit flag, set when a client starts the quitting process
 
 	public:
-		Server();
-		int AcceptClient(int);    // Clients join game
+		Server(const std::string& ServerIp = "localhost", const std::string& ServerPort = "1234");
+		virtual ~Server();
+		int AcceptClient(int);    	// Clients join game
 		void StartListening();      // Starts thread running Listen()
-		void Listen();             // Listen for client input
-		int SendPosition(int);    // Sends position to clients
+		void Listen();             	// Listen for client input
+		int SendPosition(int);    	// Sends position to clients
 		bool GetKey(int);
+		int AnnounceEnd( int );
+		bool GetQuit();
 
 		Pong::Network::GameInfo::GameInfo msg; // Message sent to client
 	};

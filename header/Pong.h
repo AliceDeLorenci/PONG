@@ -28,15 +28,23 @@ namespace Pong {
 		Network::Client::Client client;
 #endif
 
+#if SERVER || CLIENT
+	public:
+		Pong(const std::string& ServerIp = "localhost", const std::string& ServerPort = "1234");
+		bool OnUserDestroy() override;	// called when the user clicks the exit button
+#else
+	public:
+		Pong();
+#endif
+
 	private:
 		void DrawDivision();
 		void Init();
 
 	public:
-		Pong();
-
 		bool OnUserCreate() override;
 		bool OnUserUpdate(float) override;
+		virtual ~Pong();
 
 #if CLIENT
 		void UpdatePositions();

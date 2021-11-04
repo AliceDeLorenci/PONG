@@ -4,7 +4,9 @@
 #include <errno.h>
 
 namespace Pong::Network::Client {
-	Client::Client() {
+	Client::Client(const std::string& ServerIp, const std::string& ServerPort) {
+		ip = ServerIp;
+		port = ServerPort;
 		// Allocate a UDP socket for the client
 		if ((my_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 			perror("Socket creation failure.");
@@ -18,7 +20,10 @@ namespace Pong::Network::Client {
 		server_addr.sin_addr.s_addr = INADDR_ANY;
 
 		memset(&msg, 0, sizeof(msg));
+
+		quit = false;
 	}
+	Client::~Client() {}
 
 	int Client::Connect() {
 		char buffer[MAXLINE];
@@ -42,10 +47,14 @@ namespace Pong::Network::Client {
 	}
 
 	void Client::Listen() {
-		while (true) {
+		while ( !quit ) {
 			unsigned int len = sizeof(server_addr);
 			recvfrom(my_socket, &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr, &len);
 			msg.Deserialize();
+
+			if( strcmp( msg.type, USER_DESTROY ) ==  0 ){
+				quit = true;
+			}
 		}
 	}
 
@@ -73,5 +82,7 @@ namespace Pong::Network::Client {
 	void Client::SetKey(int key, bool held) {
 		keys[key] = held;
 	}
+
+	bool Client::GetQuit() { return quit; }
 }
 #endif // CLIENT

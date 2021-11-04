@@ -24,6 +24,7 @@ namespace Pong::Network::Client {
 
 	static constexpr const char* CONNECT_HANDSHAKE = "WHO AM I";
 	static constexpr std::string_view INCOMING_POSTION = "CONF";
+	static constexpr const char* USER_DESTROY = "EXIT";
 
 	enum KeyPlayer { UP, DOWN };
 
@@ -34,14 +35,19 @@ namespace Pong::Network::Client {
 		struct sockaddr_in server_addr;
 		int player_num;
 		std::array<bool, 2> keys;                       // {UP, DOWN}, 1 = held
+		std::string ip;
+		std::string port;
+		bool quit;			// quit flag, set when an outsider starts the quitting process
 
 	public:
-		Client();
+		Client(const std::string& ServerIp = "localhost", const std::string& ServerPort = "1234");
+		virtual ~Client();
 		int Connect();
 		void StartListening();
 		void Listen();
 		int SendKeys();
 		void SetKey(int, bool);
+		bool GetQuit();
 
 		Pong::Network::GameInfo::GameInfo msg;          // Message received from server
 	};

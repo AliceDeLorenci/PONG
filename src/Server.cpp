@@ -2,7 +2,10 @@
 #include "Server.h"
 
 namespace Pong::Network::Server {
-	Server::Server() {
+	Server::Server(const std::string& ServerIp, const std::string& ServerPort) {
+		ip = ServerIp;
+		port = ServerPort;
+
 		// Allocate a UDP socket for the server
 		if ((my_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 			perror("Socket creation failure.");
@@ -21,7 +24,13 @@ namespace Pong::Network::Server {
 			perror("Bind failed.");
 			exit(FAIL);
 		}
+
+		// Until a user calls destroy, server -> client communications will be of game configuration type
+		strcpy( msg.type, OUTGOING_POSITION );  
+
+		quit = false;
 	}
+	Server::~Server() {}
 
 	int Server::AcceptClient(int client_num) {
 		// Accepts a client and saves its address for future reference
@@ -49,7 +58,7 @@ namespace Pong::Network::Server {
 	void Server::Listen() {
 		struct sockaddr_in client_addr;
 
-		while (true) {
+		while ( !quit ) {
 			char buffer[MAXLINE];
 			unsigned int len = sizeof(client_addr);
 			memset(&client_addr, 0, sizeof(client_addr));
@@ -96,5 +105,26 @@ namespace Pong::Network::Server {
 	bool Server::GetKey(int key_num) {
 		return keys[key_num];
 	}
+
+	int Server::AnnounceEnd( int client_num ){
+		
+		// wait for acknowledgement with a loop?
+
+		// VERIFY whether there are clients already or not
+
+		strcpy(msg.type, USER_DESTROY);
+
+		unsigned int len = sizeof(clients[client_num]);
+		msg.Serialize();
+		if (sendto(my_socket, &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_CONFIRM, (const struct sockaddr*)&clients[client_num], len) < 0) {
+			perror("Error sending quit message\n");
+			return 1;
+		}
+		msg.Deserialize();
+
+		return 0;
+	}
+
+	bool Server::GetQuit(){ return quit; }
 }
 #endif
