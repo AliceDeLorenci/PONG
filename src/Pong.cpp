@@ -10,17 +10,36 @@ namespace Pong {
 		//while ( server.AcceptClient(Network::Server::ClientOne) ) {}
 		//while ( server.AcceptClient(Network::Server::ClientTwo) ) {}
 		
+		/*
 		server.AcceptClient(Network::Server::ClientOne);
 		server.AcceptClient(Network::Server::ClientTwo);
 
 		server.StartListening();
 
 		Init();
+		*/
+		bool create = false;
+		setup_connections = std::thread(&Pong::SetUpConnections, this);
+		setup_connections.detach();
 
 		return true;
 	}
 
+	void Pong::SetUpConnections(){
+			server.AcceptClient(Network::Server::ClientOne);
+			server.AcceptClient(Network::Server::ClientTwo);
+
+			server.StartListening();
+
+			Init();
+
+			create = true;
+	}
+
 	bool Pong::OnUserUpdate(float fElapsedTime) {
+
+		if( !create )
+			return true;
 
 		// When OnUserUpdate returns false the PixelGameEngine exits (calls on UserDestroy)
 		if( server.GetQuit() ){
@@ -63,14 +82,21 @@ namespace Pong {
 	}
 	
 	/***
-	 * Called when the user clicks the exit button. Announces to the clients that the game has ended.
+	 * Called when the user clicks the exit button or when a client disconnected. 
+	 * Announces to the clients that the game has ended.
 	***/
 	bool Pong::OnUserDestroy(){
+
+		std::string status_msg;
+		status_msg = "[STATUS] Disconnecting";
+		server.RuntimeMessage( status_msg );
 		
 		server.QuitListener();
 
-		server.AnnounceEnd( Network::Server::ClientOne );
-		server.AnnounceEnd( Network::Server::ClientTwo );
+		if( server.IsClientConnected( Network::Server::ClientOne ) )
+			server.AnnounceEnd( Network::Server::ClientOne );
+		if( server.IsClientConnected( Network::Server::ClientTwo ) )
+			server.AnnounceEnd( Network::Server::ClientTwo );
 
 		return true;
 	}
@@ -148,6 +174,10 @@ namespace Pong {
 	 * Announces to the server that the game has ended if the former is true.
 	***/
 	bool Pong::OnUserDestroy(){
+
+		std::string status_msg;
+		status_msg = "[STATUS] Disconnecting";
+		client.RuntimeMessage( status_msg );
 		
 		client.QuitListener();
 

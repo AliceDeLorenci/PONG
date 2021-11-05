@@ -8,6 +8,8 @@ namespace Pong::Network::Server {
 		CreateConnection( UDP, UDPServerPort );
 		CreateConnection( TCP, TCPServerPort );
 
+		TCP_clients = { -1, -1 };
+
 		client_quit = false;
 		quit_listener = false;
 		quit = false;
@@ -146,10 +148,13 @@ namespace Pong::Network::Server {
 				buffer[n] = '\0';
 
 				if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
+					std::string status_msg;
+					status_msg = "[STATUS] Client " + std::to_string(client) + " disconnected";
+					RuntimeMessage( status_msg );
+
 					quit = true;
 					client_quit = true;
 					quit_listener = true;
-
 					break;
 				}
 			}
@@ -186,8 +191,13 @@ namespace Pong::Network::Server {
 		return 0;
 	}
 
+	void Server::RuntimeMessage( std::string msg ){
+		std::cout << msg << std::endl;
+	}
+
 	bool Server::GetQuit() { return quit; }
 	bool Server::GetClientQuit() { return client_quit; }
 	void Server::QuitListener() { quit_listener = true; }
+	bool Server::IsClientConnected( int client ) { return (TCP_clients[client] < 0) ? false : true; }
 }
 #endif

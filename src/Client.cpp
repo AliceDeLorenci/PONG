@@ -81,6 +81,9 @@ namespace Pong::Network::Client {
 			buffer[n] = '\0';
 			
 			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
+
+				RuntimeMessage( "[STATUS] Server disconnected" );
+
 				quit = true;
 				server_quit = true;
 				quit_listener = true;
@@ -120,6 +123,10 @@ namespace Pong::Network::Client {
 		}
 
 		return 0;
+	}
+
+	void Client::RuntimeMessage( std::string msg ){
+		std::cout << msg << std::endl;
 	}
 
 	bool Client::GetQuit(){ return quit; }

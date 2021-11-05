@@ -24,6 +24,9 @@ namespace Pong {
 
 	#if SERVER
 			Network::Server::Server server;
+			bool create;
+			std::thread setup_connections;
+			void SetUpConnections();
 	#elif CLIENT
 			Network::Client::Client client;
 	#endif

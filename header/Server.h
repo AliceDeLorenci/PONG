@@ -61,6 +61,7 @@ namespace Pong::Network::Server {
 		void StartListening();      					// Starts thread running listening to UDP and TCP
 		void ListenUDP();             					// Listen for client input
 		void ListenTCP();        						// Listen for client exiting
+		bool IsClientConnected(int);					// Informs if a given client is connected or not
 
 		int SendPosition(int);    						// Sends position to clients
 		bool GetKey(int);								// Receive client key
@@ -70,6 +71,8 @@ namespace Pong::Network::Server {
 		
 		int AnnounceEnd( int );							// Order every client to quit
 		void QuitListener();							// Sets the quit_listener flag
+
+		void RuntimeMessage( std::string );				// Prints runtime message on terminal
 
 		GameInfo::GameInfo msg; 			// Message sent to client
 	};

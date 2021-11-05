@@ -59,6 +59,8 @@ namespace Pong::Network::Client {
 		void QuitListener();							// Sets the quit_listener flag
 		int AnnounceEnd();								// Tell the server you're quitting
 
+		void RuntimeMessage( std::string );				// Prints runtime message on terminal
+
 		Pong::Network::GameInfo::GameInfo msg;          // Message received from server
 	};
 }

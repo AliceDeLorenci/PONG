@@ -1686,6 +1686,7 @@ namespace olc
 #if !defined(PGE_USE_CUSTOM_START)
 	olc::rcode PixelGameEngine::Start()
 	{
+
 		if (platform->ApplicationStartUp() != olc::OK) return olc::FAIL;
 
 		// Construct the window
@@ -3052,6 +3053,7 @@ namespace olc
 
 	void PixelGameEngine::olc_CoreUpdate()
 	{
+
 		// Handle Timing
 		m_tp2 = std::chrono::system_clock::now();
 		std::chrono::duration<float> elapsedTime = m_tp2 - m_tp1;
