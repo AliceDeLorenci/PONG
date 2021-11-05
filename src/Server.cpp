@@ -39,15 +39,15 @@ namespace Pong::Network::Server {
 		memset(&addr.sin_zero, 0, sizeof(addr.sin_zero));
 
 		// Bind socket to port
-		if (bind( sockets[TYPE], (struct sockaddr*)&addr, sizeof(addr)) < 0 ) {
+		if (bind( sockets[TYPE], (struct sockaddr*) &addr, sizeof(addr)) < 0 ) {
 			perror("Bind failed.");
 			exit(FAIL);
 		}
 
 		if( TYPE == TCP ){
 			// socket in passive open mode
-			if( listen( sockets[TCP], 1 ) == -1 ){
-    			printf("\nErro na funcao listen()\n");
+			if( listen( sockets[TCP], 1 ) == -1 ) {
+				std::cout << "[Error]: could not prepare to accept connections on listen()\n";
     			return 1;
   			}
 		}
@@ -78,7 +78,7 @@ namespace Pong::Network::Server {
 		while( true ){
 			char buffer[MAXLINE];
 			unsigned len = sizeof( &(UDP_clients[client_num]) );
-			int n = recvfrom( sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&(UDP_clients[client_num]), &len);
+			int n = recvfrom( sockets[UDP], (char*) buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*) &UDP_clients[client_num], &len);
 			buffer[n] = '\0';
 
 			std::cout << "CLIENT SAID: " << buffer << std::endl;
@@ -96,9 +96,16 @@ namespace Pong::Network::Server {
 
 	}
 
-	void Server::StartListeningUDP() {
-		udp_thread_listen = std::thread(&Server::ListenUDP, this);
-		udp_thread_listen.detach();
+	void Server::StartListening() {
+		thread_listen[UDP] = std::thread(&Server::ListenUDP, this);
+		thread_listen[UDP].detach();
+
+		//thread_listen[TCP] = std::thread(&Server::ListenTCP, this);
+		//thread_listen[TCP].detach();
+
+		std::thread thread1 ( &Server::ListenTCP1, this );
+		std::thread thread2 ( &Server::ListenTCP2, this );
+
 	}
 
 	void Server::ListenUDP() {
@@ -121,7 +128,7 @@ namespace Pong::Network::Server {
 				sscanf(buffer, "%s %d %d %d", type, &isPlayerOne, &up, &down);
 
 				if (up | down) {
-					printf("UP: %d - DOWN: %d\n", up, down);
+					std::cout << "Player Num: " << isPlayerOne << " Up = " << up << " Down = " << down << "\n";
 				}
 
 				if (isPlayerOne) {
@@ -133,10 +140,76 @@ namespace Pong::Network::Server {
 					keys[DOWN] = down;
 				}
 			}
-			else if( strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0 ){
+		}
+	}
+
+	void Server::ListenTCP( ) {
+
+		int n;
+		char buffer[MAXLINE];
+		
+		while ( !quit_listener ) {
+
+			for(int client = ClientOne; client <= ClientTwo; client++) {
+				if( fcntl(TCP_clients[client], F_GETFL, 0) == -1 ) // no data
+					continue;
+					
+				n = recv( TCP_clients[client], buffer, MAXLINE, 0 );             /* Receives message from client */
+				buffer[n] = '\0';
+
+				std::cout << "DEBUG1: " << buffer << std::endl;
+
+				if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
+					quit = true;
+					client_quit = true;
+					quit_listener = true;
+
+					std::cout << "DEBUG2" << std::endl;
+				}
+			}
+		}
+	}
+
+	void Server::ListenTCP1( ) {
+
+		int n;
+		char buffer[MAXLINE];
+		
+		while ( !quit_listener ) {
+					
+			n = recv( TCP_clients[ClientOne], buffer, MAXLINE, 0 );             /* Receives message from client */
+			buffer[n] = '\0';
+
+			std::cout << "CLIENT1: " << buffer << std::endl;
+
+			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
 				quit = true;
 				client_quit = true;
 				quit_listener = true;
+
+				std::cout << "CLIENT1 SETTED FLAGS" << std::endl;
+			}
+		}
+	}
+
+	void Server::ListenTCP2( ) {
+
+		int n;
+		char buffer[MAXLINE];
+		
+		while ( !quit_listener ) {
+					
+			n = recv( TCP_clients[ClientTwo], buffer, MAXLINE, 0 );             /* Receives message from client */
+			buffer[n] = '\0';
+
+			std::cout << "CLIENT2: " << buffer << std::endl;
+
+			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
+				quit = true;
+				client_quit = true;
+				quit_listener = true;
+
+				std::cout << "CLIENT2 SETTED FLAGS" << std::endl;
 			}
 		}
 	}
@@ -156,15 +229,14 @@ namespace Pong::Network::Server {
 		return keys[key_num];
 	}
 
-	int Server::AnnounceEnd( int client_num ){
-		
-		// wait for acknowledgement with a loop?
+	int Server::AnnounceEnd( int client_num ) {
 
-		// VERIFY whether there are clients already or not
+		// VERIFY whether there are clients already or not (quitting before clients established connection )
 
-		// Says which player the client is
-		const char* client_msg = USER_DESTROY;
-		if ( send( TCP_clients[client_num], &client_msg, strlen(client_msg), 0 ) < 0 ) {
+		char client_msg[MAXLINE];
+		strcpy( client_msg, USER_DESTROY );
+
+		if ( send( TCP_clients[client_num], (const char*) client_msg, strlen(client_msg), 0 ) < 0 ) {
 			perror("Error sending quit message\n");
 			return 1;
 		}
@@ -172,8 +244,8 @@ namespace Pong::Network::Server {
 		return 0;
 	}
 
-	bool Server::GetQuit(){ return quit; }
-	bool Server::GetClientQuit(){ return client_quit; }
-	void Server::QuitListener(){ quit_listener = true; }
+	bool Server::GetQuit() { return quit; }
+	bool Server::GetClientQuit() { return client_quit; }
+	void Server::QuitListener() { quit_listener = true; }
 }
 #endif

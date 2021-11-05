@@ -13,7 +13,7 @@ namespace Pong {
 		server.AcceptClient(Network::Server::ClientOne);
 		server.AcceptClient(Network::Server::ClientTwo);
 
-		server.StartListeningUDP();
+		server.StartListening();
 
 		Init();
 
@@ -80,8 +80,11 @@ namespace Pong {
 		//if( !server.GetClientQuit() ){	// Meaning that the quitting action truly started with the server
 			
 			// For now the methods don't ensure that the message was received
+			std::cout << "AnnounceEnd ClientOne starting\n";
 			server.AnnounceEnd( Network::Server::ClientOne );
+			std::cout << "AnnounceEnd ClientTwo starting\n";
 			server.AnnounceEnd( Network::Server::ClientTwo );
+			std::cout << "AnnounceEnd done\n";
 
 		//}
 		return true;
@@ -96,7 +99,7 @@ namespace Pong {
 
 	bool Pong::OnUserCreate() {
 		client.Connect();
-		client.StartListeningUDP();
+		client.StartListening();
 
 		Init();
 
@@ -159,6 +162,8 @@ namespace Pong {
 	 * Called when the user clicks the exit button. Announces to the server that the game has ended.
 	***/
 	bool Pong::OnUserDestroy(){
+
+		std::cout << "USER STARTED DESTROY" << std::endl; 
 		
 		client.QuitListener();
 

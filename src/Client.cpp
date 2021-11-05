@@ -32,7 +32,7 @@ namespace Pong::Network::Client {
 		// Server: "<player number>"
 		sockets[TCP] = socket( AF_INET, SOCK_STREAM, 0 );
 
-		if( connect( sockets[TCP], (struct sockaddr*)&(server_addr[TCP]), sizeof(server_addr[TCP]) ) == -1 ){
+		if( connect( sockets[TCP], (struct sockaddr*) &server_addr[TCP], sizeof(server_addr[TCP]) ) == -1 ){
 			perror("Error stablishing TCP connection");
 			return 1;
 		}
@@ -48,39 +48,61 @@ namespace Pong::Network::Client {
 
 		// UDP
 		// Client: "I am <player number>"
-
 		sockets[UDP] = socket( AF_INET, SOCK_DGRAM, 0 );
 		char buffer[MAXLINE];
 		sprintf( buffer, "I AM %d", player_num );
 
 		unsigned int len = sizeof( server_addr[UDP] );
-		sendto( sockets[UDP], buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr*)&( server_addr[UDP] ), len);
+		sendto( sockets[UDP], buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr*) &server_addr[UDP], len );
 
 		return 0;
 	}
 
-	void Client::StartListeningUDP() {
-		udp_thread_listen = std::thread(&Client::ListenUDP, this);
-		udp_thread_listen.detach();
+	void Client::StartListening() {
+		thread_listen[UDP] = std::thread(&Client::ListenUDP, this);
+		thread_listen[UDP].detach();
+
+		thread_listen[TCP] = std::thread(&Client::ListenTCP, this);
+		thread_listen[TCP].detach();
 	}
 
 	void Client::ListenUDP() {
 		while ( !quit_listener ) {
 			unsigned int len = sizeof(server_addr[UDP]);
-			recvfrom( sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)& server_addr[UDP], &len);
+			recvfrom( sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*) &server_addr[UDP], &len);
 			msg.Deserialize();
-			/*
-			if( strcmp( msg.type, USER_DESTROY ) ==  0 ){
+		}
+	}
+
+	void Client::ListenTCP() {
+
+		int n;
+		char buffer[MAXLINE];
+		
+		while ( !quit_listener ) {
+			
+			if( fcntl( sockets[TCP], F_GETFL, 0 ) == -1 ) // no data
+				continue;
+
+			n = recv( sockets[TCP], buffer, MAXLINE, 0 );             /* Receives message from client */
+			buffer[n] = '\0';
+			
+			std::cout << "DEBUG 1:" << buffer << std::endl;
+
+			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
 				quit = true;
 				server_quit = true;
 				quit_listener = true;
+
+				std::cout << "DEBUG 2" << std::endl;
 			}
-			*/
+
+			std::cout << "DEBUG 3" << std::endl;
+			
 		}
 	}
 
 	int Client::SendKeys() {
-		errno = 0;
 
 		// build string
 		char client_msg[MAXLINE];
@@ -88,7 +110,7 @@ namespace Pong::Network::Client {
 
 		// Sends game configuration
 		unsigned int len = sizeof( server_addr[UDP] );
-		if (sendto( sockets[UDP], (const char*)client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr*)& server_addr[UDP], len) < 0) {
+		if (sendto( sockets[UDP], (const char*) client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr*) &server_addr[UDP], len) < 0) {
 			perror("Error sending msg\n");
 			return 1;
 		}
@@ -100,18 +122,17 @@ namespace Pong::Network::Client {
 	}
 
 	int Client::AnnounceEnd( ){
-		
-		// wait for acknowledgement with a loop?
-
+	
 		// build string
 		char client_msg[MAXLINE];
 		strcpy( client_msg, USER_DESTROY );
 
-		unsigned int len = sizeof( server_addr[TCP] );
-		if (send(sockets[TCP], (const char*)client_msg, strlen(client_msg), 0 ) < 0) {
+		if ( send(sockets[TCP], (const char*) client_msg, strlen(client_msg), 0 ) < 0 ) {
 			perror("Error sending quit msg\n");
 			return 1;
 		}
+
+		std::cout << "CLIENT ANNOUNCED END" << std::endl;
 
 		return 0;
 	}

@@ -22,17 +22,12 @@
 //#define INCOMING_CLIENT "WHO AM I"
 
 namespace Pong::Network::Server {
-	constexpr int SERVER_PORT = 1234;
-	constexpr int MAXLINE = 1024;
-	constexpr int FAIL = 1;
-
-	static constexpr const char* NEW_TCP_CLIENT = "WHO AM I";
-	static constexpr const char* NEW_UDP_CLIENT = "I AM";
+	static constexpr const char* NEW_TCP_CLIENT 	= "WHO AM I";
+	static constexpr const char* NEW_UDP_CLIENT 	= "I AM";
 	static constexpr const char* CONFIRM_UDP_CLIENT = "I AM";
-	//static constexpr std::string_view INCOMING_KEYS = "KEYS";
-	static constexpr const char* INCOMING_KEYS = "KEYS";
-	static constexpr const char* OUTGOING_POSITION = "CONF";
-	static constexpr const char* USER_DESTROY = "EXIT";
+	static constexpr const char* INCOMING_KEYS 		= "KEYS";
+	static constexpr const char* OUTGOING_POSITION 	= "CONF";
+	static constexpr const char* USER_DESTROY 		= "EXIT";
 
 	enum ClientNum { ClientOne, ClientTwo };
 	enum KeyPlayer { W, S, UP, DOWN };
@@ -40,8 +35,7 @@ namespace Pong::Network::Server {
 
 	class Server {
 	private:
-		std::thread udp_thread_listen;                  // thread responsible for listening to clients (udp connection)
-		std::thread tcp_thread_listen;                  // thread responsible for listening to clients (tcp connection)
+		std::array<std::thread, 2> thread_listen;       // thread_listen[CONNECTION TYPE] thread responsible for listening to server
 		std::array<struct sockaddr_in, 2> UDP_clients;  // UDP_clients[ClientNum]
 		std::array<int, 2> TCP_clients;					// TCP_clients[ClientNum]
 		std::array<bool, 4> keys = { 0,0,0,0 };         // 1 = held
@@ -57,20 +51,19 @@ namespace Pong::Network::Server {
 		bool quit;		 								// general quit flag
 
 	public:
-		Server(const std::string& ServerIp = "127.0.0.1", const std::string& UDPServerPort = "1234", const std::string& TCPServerPort = "1235");
+		Server(const std::string& ServerIp = LOCALHOST, const std::string& UDPServerPort = DEFAULT_UDP_PORT, const std::string& TCPServerPort = DEFAULT_TCP_PORT);
 		virtual ~Server();
 
 		int CreateConnection( int, const std::string& );
 
 		int AcceptClient(int);    						// Clients join game
 
-		void StartListeningUDP();      					// Starts thread running Listen()
+		void StartListening();      					// Starts thread running listening to UDP and TCP
 		void ListenUDP();             					// Listen for client input
+		void ListenTCP();        						// Listen for client exiting
 
-		/*
-		void StartListeningTCP();      					// Starts thread running Listen()
-		void ListenTCP();             					// Listen for client input
-		*/
+		void ListenTCP1();        						// Listen for client exiting
+		void ListenTCP2();        						// Listen for client exiting
 
 		int SendPosition(int);    						// Sends position to clients
 		bool GetKey(int);								// Receive client key
@@ -78,10 +71,10 @@ namespace Pong::Network::Server {
 		bool GetQuit();
 		bool GetClientQuit();
 		
-		int AnnounceEnd( int );							// Warns every client to quit
+		int AnnounceEnd( int );							// Order every client to quit
 		void QuitListener();							// Sets the quit_listener flag
 
-		Pong::Network::GameInfo::GameInfo msg; 			// Message sent to client
+		GameInfo::GameInfo msg; 			// Message sent to client
 	};
 }
 #endif  // SERVER_H
