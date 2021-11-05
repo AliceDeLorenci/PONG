@@ -13,6 +13,7 @@ namespace Pong {
 	constexpr float PADDING = 10.0f;
 	constexpr int32_t DIV_SIZE = 6;
 	constexpr int32_t BORDER = 1;
+	constexpr int FAIL = 1;
 
 	enum PlayerNum { PlayerOne, PlayerTwo };
 
@@ -24,9 +25,10 @@ namespace Pong {
 
 	#if SERVER
 			Network::Server::Server server;
-			bool create;
-			std::thread setup_connections;
-			void SetUpConnections();
+
+			bool create;						// Flag that indicates whether the connection setup was completed
+			std::thread setup_connections;		// Thread responsible for accepting clients
+			void SetUpConnections();			// Method used by the setup_connections threas
 	#elif CLIENT
 			Network::Client::Client client;
 	#endif

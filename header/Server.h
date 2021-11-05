@@ -6,6 +6,7 @@
 #include "Network.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -35,7 +36,8 @@ namespace Pong::Network::Server {
 
 	class Server {
 	private:
-		std::array<std::thread, 2> thread_listen;       // thread_listen[CONNECTION TYPE] thread responsible for listening to server
+		std::array<std::thread, 2> thread_listen;       // thread_listen[CONNECTION TYPE] thread responsible for listening to clients
+		std::thread temporary_listener;					// while only one client is connected, listen to quitting messages from him
 		std::array<struct sockaddr_in, 2> UDP_clients;  // UDP_clients[ClientNum]
 		std::array<int, 2> TCP_clients;					// TCP_clients[ClientNum]
 		std::array<bool, 4> keys = { 0,0,0,0 };         // 1 = held
@@ -46,6 +48,8 @@ namespace Pong::Network::Server {
 		std::string ip;									// Server IP
 		in_addr_t convertedIp;							// Server IP converted to in_addr_t
 		
+		bool connection_success;						// used to quit the temporary listener
+
 		bool client_quit;  								// quit flag, set when a client starts the quitting process
 		bool quit_listener;								// used to quit the listener thread
 		bool quit;		 								// general quit flag
@@ -61,6 +65,7 @@ namespace Pong::Network::Server {
 		void StartListening();      					// Starts thread running listening to UDP and TCP
 		void ListenUDP();             					// Listen for client input
 		void ListenTCP();        						// Listen for client exiting
+		void ListenToOneClient(int);					// Listen to the only client connected
 		bool IsClientConnected(int);					// Informs if a given client is connected or not
 
 		int SendPosition(int);    						// Sends position to clients

@@ -7,18 +7,9 @@ namespace Pong {
 	}
 
 	bool Pong::OnUserCreate() {
-		//while ( server.AcceptClient(Network::Server::ClientOne) ) {}
-		//while ( server.AcceptClient(Network::Server::ClientTwo) ) {}
-		
-		/*
-		server.AcceptClient(Network::Server::ClientOne);
-		server.AcceptClient(Network::Server::ClientTwo);
 
-		server.StartListening();
-
-		Init();
-		*/
 		bool create = false;
+
 		setup_connections = std::thread(&Pong::SetUpConnections, this);
 		setup_connections.detach();
 
@@ -26,8 +17,11 @@ namespace Pong {
 	}
 
 	void Pong::SetUpConnections(){
-			server.AcceptClient(Network::Server::ClientOne);
-			server.AcceptClient(Network::Server::ClientTwo);
+
+			for( int client = Network::Server::ClientOne; client <= Network::Server::ClientTwo; client++ ){
+				if( server.AcceptClient( client ) == FAIL )
+					return;
+			}
 
 			server.StartListening();
 
@@ -38,14 +32,13 @@ namespace Pong {
 
 	bool Pong::OnUserUpdate(float fElapsedTime) {
 
-		if( !create )
-			return true;
-
 		// When OnUserUpdate returns false the PixelGameEngine exits (calls on UserDestroy)
 		if( server.GetQuit() ){
-			// Perhaps print a message on the screen and wait for some user action
 			return false;
 		}
+
+		if( !create )			// Only start the game after both clients connected
+			return true;
 
 		// User input
 		if (server.GetKey(Network::Server::W))

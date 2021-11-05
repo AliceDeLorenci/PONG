@@ -10,6 +10,7 @@ namespace Pong::Network::Server {
 
 		TCP_clients = { -1, -1 };
 
+		connection_success = false;
 		client_quit = false;
 		quit_listener = false;
 		quit = false;
@@ -63,10 +64,29 @@ namespace Pong::Network::Server {
 		// Server: "<player number>"
 
 		// Accepts a TCP client and saves the corresponding socket number
+
+		/*
+		// Nonblocking socket
+		int on = 1;
+		int rc = ioctl(sockets[TCP], FIONBIO, (char *)&on);
+
+
+		while( (TCP_clients[client_num] = accept( sockets[TCP], 0, 0 )) < 0 && !quit_listener ){
+			// perror("[Error] failed to accept client!\n");
+			// return 1;
+		}
+
+		if( quit_listener ){
+			// so that we don't get the error: terminate called without an active exception
+			//								   Aborted (core dumped)
+			return 1;
+		}
+		*/
 		if( (TCP_clients[client_num] = accept( sockets[TCP], 0, 0 )) < 0 ){
 			perror("[Error] failed to accept client!\n");
 			return 1;
 		}
+
 
 		// Says which player the client is
 		const char* client_msg = std::to_string(client_num).c_str();
@@ -91,6 +111,13 @@ namespace Pong::Network::Server {
 			break;
 		}
 
+		if( client_num == ClientOne ){
+			temporary_listener = std::thread( &Server::ListenToOneClient, this, client_num );
+		}
+		else{
+			connection_success = true;
+		}
+
 		return 0;
 
 	}
@@ -101,6 +128,33 @@ namespace Pong::Network::Server {
 
 		thread_listen[TCP] = std::thread(&Server::ListenTCP, this);
 		thread_listen[TCP].detach();
+	}
+
+	void Server::ListenToOneClient( int client ){
+
+		// makes the socket non-blocking
+		fcntl(TCP_clients[client], F_SETFL, fcntl(TCP_clients[client], F_GETFL) | O_NONBLOCK);
+
+		while ( !quit_listener && !connection_success ) {
+
+			char buffer[MAXLINE];
+			int n = recv( TCP_clients[client], buffer, MAXLINE, 0 );
+
+			if(n == -1) continue;
+			buffer[n] = '\0';
+
+			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
+				std::string status_msg;
+				status_msg = "[STATUS] Client " + std::to_string(client) + " disconnected";
+				RuntimeMessage( status_msg );
+
+				quit = true;
+				client_quit = true;
+				quit_listener = true;
+				break;
+			}
+
+		}
 	}
 
 	void Server::ListenUDP() {
