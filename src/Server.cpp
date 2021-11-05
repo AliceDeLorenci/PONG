@@ -113,6 +113,7 @@ namespace Pong::Network::Server {
 
 		if( client_num == ClientOne ){
 			temporary_listener = std::thread( &Server::ListenToOneClient, this, client_num );
+			temporary_listener.detach();
 		}
 		else{
 			connection_success = true;
