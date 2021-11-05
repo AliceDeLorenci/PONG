@@ -9,12 +9,12 @@ namespace Pong::Network{
 		if(!port.empty() && port.find_first_not_of("0123456789") == std::string::npos) { // if port is a number
 			ret_port = std::stoi(port);
 			if(ret_port <= 0 || ret_port > 65535) {
-				std::cout << "[Error]: Port must be in range (0, 65535]!" << std::endl;
+				perror("[Error]: Port must be in range (0, 65535]!\n");;
 				exit(FAIL);
 			}
 		}
 		else {
-			std::cout << "[Error]: Port must be a number!" << std::endl;
+			perror("[Error]: Port must be a number!\n");
 			exit(FAIL);
 		}
 		return ret_port;
@@ -24,11 +24,11 @@ namespace Pong::Network{
 		in_addr_t convertedIp;
 		auto errCode = inet_pton(AF_INET, ip.c_str(), (void*) &convertedIp);
 		if(errCode == 0) {
-			std::cout << "[Error]: Invalid IP address!" << std::endl;
+			perror("[Error]: Invalid IP address!\n");
 			exit(FAIL);
 		}
 		else if(errCode == -1) {
-			std::cout << "inet_pton error!" << std::endl;
+			perror("[Error] inet_pton error!\n");
 			exit(FAIL);
 		}
 		return convertedIp;

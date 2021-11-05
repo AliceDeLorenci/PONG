@@ -29,25 +29,17 @@ namespace Pong {
 		}
 
 		// User input
-		if (server.GetKey(Network::Server::W)) {
+		if (server.GetKey(Network::Server::W))
 			players[PlayerOne]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
-			//std::cout << "W\n";
-		}
 
-		if (server.GetKey(Network::Server::S)) {
+		if (server.GetKey(Network::Server::S)) 
 			players[PlayerOne]->Move(olc::vf2d(0, +Player::Player::speed * fElapsedTime));
-			//std::cout << "S\n";
-		}
 
-		if (server.GetKey(Network::Server::UP)) {
+		if (server.GetKey(Network::Server::UP))
 			players[PlayerTwo]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
-			//std::cout << "UP\n";
-		}
 
-		if (server.GetKey(Network::Server::DOWN)) {
+		if (server.GetKey(Network::Server::DOWN))
 			players[PlayerTwo]->Move(olc::vf2d(0, +Player::Player::speed * fElapsedTime));
-			//std::cout << "DOWN\n";
-		}
 
 		// Moves the ball
 		ball->Move(fElapsedTime);
@@ -77,16 +69,9 @@ namespace Pong {
 		
 		server.QuitListener();
 
-		//if( !server.GetClientQuit() ){	// Meaning that the quitting action truly started with the server
-			
-			// For now the methods don't ensure that the message was received
-			std::cout << "AnnounceEnd ClientOne starting\n";
-			server.AnnounceEnd( Network::Server::ClientOne );
-			std::cout << "AnnounceEnd ClientTwo starting\n";
-			server.AnnounceEnd( Network::Server::ClientTwo );
-			std::cout << "AnnounceEnd done\n";
+		server.AnnounceEnd( Network::Server::ClientOne );
+		server.AnnounceEnd( Network::Server::ClientTwo );
 
-		//}
 		return true;
 	}
 
@@ -159,15 +144,14 @@ namespace Pong {
 	}
 
 	/***
-	 * Called when the user clicks the exit button. Announces to the server that the game has ended.
+	 * Called when the user clicks the exit button or the server exits. 
+	 * Announces to the server that the game has ended if the former is true.
 	***/
 	bool Pong::OnUserDestroy(){
-
-		std::cout << "USER STARTED DESTROY" << std::endl; 
 		
 		client.QuitListener();
 
-		if( !client.GetServerQuit() ){	// the quitting action truly started with the client
+		if( !client.GetServerQuit() ){	// the quitting action didn't start with the server
 			client.AnnounceEnd();
 		}
 		return true;

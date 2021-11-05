@@ -2,7 +2,7 @@
 
 #if SERVER
 int main(int argc, char* argv[]) {
-	std::cout << "I'm a server!" << std::endl;
+	std::cout << "Initializing Server..." << std::endl;
 
 	std::unique_ptr<Pong::Pong> pong;
 	if(argc == 3) {
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
 #elif CLIENT
 int main(int argc, char* argv[]) {
-	std::cout << "I'm a client!" << std::endl;
+	std::cout << "Initializing Client..." << std::endl;
 
 	std::unique_ptr<Pong::Pong> pong;
 	if(argc == 4) {
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 
 #elif OFFLINE
 int main() {
-	std::cout << "I'm a Offline Game!" << std::endl;
+	std::cout << "Initializing Offline Game..." << std::endl;
 
 	std::unique_ptr<Pong::Pong> pong = std::make_unique<Pong::Pong>();
 	if (pong->Construct(640, 360, 2, 2)) // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
@@ -57,7 +57,7 @@ int main() {
 
 #else
 int main() {
-	std::cout << "[ERROR] Please compile using the provided CMake!" << std::endl;
+	std::cout << "[Error] Please compile using the provided CMake!" << std::endl;
 	return 1;
 }
 #endif

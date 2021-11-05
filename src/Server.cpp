@@ -26,7 +26,7 @@ namespace Pong::Network::Server {
 
         // Allocate a socket for the server
         if( ( sockets[TYPE] = socket( AF_INET, socket_type, 0 ) ) < 0 ){
-            perror("Socket creation failure.");
+            perror("[Error] Failed to create a server socket!\n");
             exit(EXIT_FAILURE);
         }  
 
@@ -40,14 +40,14 @@ namespace Pong::Network::Server {
 
 		// Bind socket to port
 		if (bind( sockets[TYPE], (struct sockaddr*) &addr, sizeof(addr)) < 0 ) {
-			perror("Bind failed.");
+			perror("[Error] Failed to bind a server socket!\n");
 			exit(FAIL);
 		}
 
 		if( TYPE == TCP ){
 			// socket in passive open mode
 			if( listen( sockets[TCP], 1 ) == -1 ) {
-				std::cout << "[Error]: could not prepare to accept connections on listen()\n";
+				perror("[Error]: Could not prepare to accept connections on listen()\n");
     			return 1;
   			}
 		}
@@ -62,7 +62,7 @@ namespace Pong::Network::Server {
 
 		// Accepts a TCP client and saves the corresponding socket number
 		if( (TCP_clients[client_num] = accept( sockets[TCP], 0, 0 )) < 0 ){
-			perror("Error accepting client");
+			perror("[Error] failed to accept client!\n");
 			return 1;
 		}
 
@@ -74,19 +74,16 @@ namespace Pong::Network::Server {
 		// Client: "I am <player number>"
 
 		// Accepts a UDP client and saves its address for future reference
-
 		while( true ){
 			char buffer[MAXLINE];
 			unsigned len = sizeof( &(UDP_clients[client_num]) );
 			int n = recvfrom( sockets[UDP], (char*) buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*) &UDP_clients[client_num], &len);
 			buffer[n] = '\0';
 
-			std::cout << "CLIENT SAID: " << buffer << std::endl;
-
 			if ( !strncmp( buffer, NEW_UDP_CLIENT, strlen(NEW_UDP_CLIENT) ) )
 				continue;
 			
-			if( atoi( &buffer[ strlen(NEW_UDP_CLIENT) ] ) != client_num )
+			if( atoi( &buffer[ strlen(NEW_UDP_CLIENT) + 1 ] ) != client_num )
 				continue;
 
 			break;
@@ -100,12 +97,8 @@ namespace Pong::Network::Server {
 		thread_listen[UDP] = std::thread(&Server::ListenUDP, this);
 		thread_listen[UDP].detach();
 
-		//thread_listen[TCP] = std::thread(&Server::ListenTCP, this);
-		//thread_listen[TCP].detach();
-
-		std::thread thread1 ( &Server::ListenTCP1, this );
-		std::thread thread2 ( &Server::ListenTCP2, this );
-
+		thread_listen[TCP] = std::thread(&Server::ListenTCP, this);
+		thread_listen[TCP].detach();
 	}
 
 	void Server::ListenUDP() {
@@ -127,10 +120,6 @@ namespace Pong::Network::Server {
 
 				sscanf(buffer, "%s %d %d %d", type, &isPlayerOne, &up, &down);
 
-				if (up | down) {
-					std::cout << "Player Num: " << isPlayerOne << " Up = " << up << " Down = " << down << "\n";
-				}
-
 				if (isPlayerOne) {
 					keys[W] = up;
 					keys[S] = down;
@@ -144,72 +133,25 @@ namespace Pong::Network::Server {
 	}
 
 	void Server::ListenTCP( ) {
+		// makes the socket non-blocking
+		for(int client = ClientOne; client <= ClientTwo; client++)
+			fcntl(TCP_clients[client], F_SETFL, fcntl(TCP_clients[client], F_GETFL) | O_NONBLOCK);
 
-		int n;
-		char buffer[MAXLINE];
-		
 		while ( !quit_listener ) {
-
 			for(int client = ClientOne; client <= ClientTwo; client++) {
-				if( fcntl(TCP_clients[client], F_GETFL, 0) == -1 ) // no data
-					continue;
-					
-				n = recv( TCP_clients[client], buffer, MAXLINE, 0 );             /* Receives message from client */
-				buffer[n] = '\0';
+				char buffer[MAXLINE];
+				int n = recv( TCP_clients[client], buffer, MAXLINE, 0 );
 
-				std::cout << "DEBUG1: " << buffer << std::endl;
+				if(n == -1) continue;
+				buffer[n] = '\0';
 
 				if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
 					quit = true;
 					client_quit = true;
 					quit_listener = true;
 
-					std::cout << "DEBUG2" << std::endl;
+					break;
 				}
-			}
-		}
-	}
-
-	void Server::ListenTCP1( ) {
-
-		int n;
-		char buffer[MAXLINE];
-		
-		while ( !quit_listener ) {
-					
-			n = recv( TCP_clients[ClientOne], buffer, MAXLINE, 0 );             /* Receives message from client */
-			buffer[n] = '\0';
-
-			std::cout << "CLIENT1: " << buffer << std::endl;
-
-			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
-				quit = true;
-				client_quit = true;
-				quit_listener = true;
-
-				std::cout << "CLIENT1 SETTED FLAGS" << std::endl;
-			}
-		}
-	}
-
-	void Server::ListenTCP2( ) {
-
-		int n;
-		char buffer[MAXLINE];
-		
-		while ( !quit_listener ) {
-					
-			n = recv( TCP_clients[ClientTwo], buffer, MAXLINE, 0 );             /* Receives message from client */
-			buffer[n] = '\0';
-
-			std::cout << "CLIENT2: " << buffer << std::endl;
-
-			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
-				quit = true;
-				client_quit = true;
-				quit_listener = true;
-
-				std::cout << "CLIENT2 SETTED FLAGS" << std::endl;
 			}
 		}
 	}
@@ -237,7 +179,7 @@ namespace Pong::Network::Server {
 		strcpy( client_msg, USER_DESTROY );
 
 		if ( send( TCP_clients[client_num], (const char*) client_msg, strlen(client_msg), 0 ) < 0 ) {
-			perror("Error sending quit message\n");
+			perror("[Error] Failed to send quit message to a client!\n");
 			return 1;
 		}
 

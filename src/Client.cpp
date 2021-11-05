@@ -22,7 +22,7 @@ namespace Pong::Network::Client {
 
 		server_quit = false;
 		quit_listener = false;
-		quit= false;
+		quit = false;
 	}
 	Client::~Client() {}
 
@@ -33,7 +33,7 @@ namespace Pong::Network::Client {
 		sockets[TCP] = socket( AF_INET, SOCK_STREAM, 0 );
 
 		if( connect( sockets[TCP], (struct sockaddr*) &server_addr[TCP], sizeof(server_addr[TCP]) ) == -1 ){
-			perror("Error stablishing TCP connection");
+			perror("[Error] Failed to stablish a TCP connection!\n");
 			return 1;
 		}
 
@@ -42,9 +42,6 @@ namespace Pong::Network::Client {
 		int n = recv( sockets[TCP], incoming_msg, MAXLINE, 0 );
     	incoming_msg[n] = '\0';
 		player_num = atoi( incoming_msg );
-
-		std::cout << "SERVER SAID: " << incoming_msg << std::endl;
-
 
 		// UDP
 		// Client: "I am <player number>"
@@ -75,29 +72,19 @@ namespace Pong::Network::Client {
 	}
 
 	void Client::ListenTCP() {
-
-		int n;
-		char buffer[MAXLINE];
 		
+		fcntl(sockets[TCP], F_SETFL, fcntl(sockets[TCP], F_GETFL) | O_NONBLOCK);
 		while ( !quit_listener ) {
-			
-			if( fcntl( sockets[TCP], F_GETFL, 0 ) == -1 ) // no data
-				continue;
-
-			n = recv( sockets[TCP], buffer, MAXLINE, 0 );             /* Receives message from client */
+			char buffer[MAXLINE];
+			int n = recv( sockets[TCP], buffer, MAXLINE, 0 );
+			if(n == -1) continue;
 			buffer[n] = '\0';
 			
-			std::cout << "DEBUG 1:" << buffer << std::endl;
-
 			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
 				quit = true;
 				server_quit = true;
 				quit_listener = true;
-
-				std::cout << "DEBUG 2" << std::endl;
 			}
-
-			std::cout << "DEBUG 3" << std::endl;
 			
 		}
 	}
@@ -111,7 +98,7 @@ namespace Pong::Network::Client {
 		// Sends game configuration
 		unsigned int len = sizeof( server_addr[UDP] );
 		if (sendto( sockets[UDP], (const char*) client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr*) &server_addr[UDP], len) < 0) {
-			perror("Error sending msg\n");
+			perror("[Error] Failed to send key presses!\n");
 			return 1;
 		}
 		return 0;
@@ -128,11 +115,9 @@ namespace Pong::Network::Client {
 		strcpy( client_msg, USER_DESTROY );
 
 		if ( send(sockets[TCP], (const char*) client_msg, strlen(client_msg), 0 ) < 0 ) {
-			perror("Error sending quit msg\n");
+			perror("[Error] Failed to send quit msg to the server\n");
 			return 1;
 		}
-
-		std::cout << "CLIENT ANNOUNCED END" << std::endl;
 
 		return 0;
 	}

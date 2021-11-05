@@ -40,8 +40,8 @@ namespace Pong::Network::Server {
 		std::array<int, 2> TCP_clients;					// TCP_clients[ClientNum]
 		std::array<bool, 4> keys = { 0,0,0,0 };         // 1 = held
 		
-		std::array<int, 2> ports;
-		std::array<int, 2> sockets;
+		std::array<int, 2> ports;						// ports[CONNECTION TYPE]
+		std::array<int, 2> sockets;						// sockets[CONNECTION TYPE]
 		
 		std::string ip;									// Server IP
 		in_addr_t convertedIp;							// Server IP converted to in_addr_t
@@ -61,9 +61,6 @@ namespace Pong::Network::Server {
 		void StartListening();      					// Starts thread running listening to UDP and TCP
 		void ListenUDP();             					// Listen for client input
 		void ListenTCP();        						// Listen for client exiting
-
-		void ListenTCP1();        						// Listen for client exiting
-		void ListenTCP2();        						// Listen for client exiting
 
 		int SendPosition(int);    						// Sends position to clients
 		bool GetKey(int);								// Receive client key
