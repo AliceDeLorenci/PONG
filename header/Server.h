@@ -3,7 +3,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "GameInfo.h"
+#include "Network.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -26,7 +26,9 @@ namespace Pong::Network::Server {
 	constexpr int MAXLINE = 1024;
 	constexpr int FAIL = 1;
 
-	static constexpr const char* NEW_CLIENT = "WHO AM I";
+	static constexpr const char* NEW_TCP_CLIENT = "WHO AM I";
+	static constexpr const char* NEW_UDP_CLIENT = "I AM";
+	static constexpr const char* CONFIRM_UDP_CLIENT = "I AM";
 	//static constexpr std::string_view INCOMING_KEYS = "KEYS";
 	static constexpr const char* INCOMING_KEYS = "KEYS";
 	static constexpr const char* OUTGOING_POSITION = "CONF";
@@ -34,34 +36,42 @@ namespace Pong::Network::Server {
 
 	enum ClientNum { ClientOne, ClientTwo };
 	enum KeyPlayer { W, S, UP, DOWN };
+	enum Connections { UDP, TCP };
 
 	class Server {
 	private:
-		int udp_socket;  								// socket for communicating game information
-		int tcp_socket;									// socket for communicating server information
 		std::thread udp_thread_listen;                  // thread responsible for listening to clients (udp connection)
 		std::thread tcp_thread_listen;                  // thread responsible for listening to clients (tcp connection)
-		std::array<struct sockaddr_in, 2> clients;      // client addresses
+		std::array<struct sockaddr_in, 2> UDP_clients;  // UDP_clients[ClientNum]
+		std::array<int, 2> TCP_clients;					// TCP_clients[ClientNum]
 		std::array<bool, 4> keys = { 0,0,0,0 };         // 1 = held
 		
-		std::string ip;
-		int port;
+		std::array<int, 2> ports;
+		std::array<int, 2> sockets;
+		
+		std::string ip;									// Server IP
+		in_addr_t convertedIp;							// Server IP converted to in_addr_t
 		
 		bool client_quit;  								// quit flag, set when a client starts the quitting process
 		bool quit_listener;								// used to quit the listener thread
 		bool quit;		 								// general quit flag
 
 	public:
-		Server(const std::string& ServerIp = "127.0.0.1", const std::string& ServerPort = "1234");
+		Server(const std::string& ServerIp = "127.0.0.1", const std::string& UDPServerPort = "1234", const std::string& TCPServerPort = "1235");
 		virtual ~Server();
 
-		int CreateUDPConnection();
-		int CreateTCPConnection();
+		int CreateConnection( int, const std::string& );
 
 		int AcceptClient(int);    						// Clients join game
 
 		void StartListeningUDP();      					// Starts thread running Listen()
 		void ListenUDP();             					// Listen for client input
+
+		/*
+		void StartListeningTCP();      					// Starts thread running Listen()
+		void ListenTCP();             					// Listen for client input
+		*/
+
 		int SendPosition(int);    						// Sends position to clients
 		bool GetKey(int);								// Receive client key
 

@@ -17,38 +17,38 @@ namespace Pong {
 	enum PlayerNum { PlayerOne, PlayerTwo };
 
 	class Pong : public olc::PixelGameEngine {
-	private:
-		std::array<std::unique_ptr<Player::Player>, 2> players;
-		std::unique_ptr<Ball::Ball> ball;
-		std::array<int, 2> score;
+		private:
+			std::array<std::unique_ptr<Player::Player>, 2> players;
+			std::unique_ptr<Ball::Ball> ball;
+			std::array<int, 2> score;
 
-#if SERVER
-		Network::Server::Server server;
-#elif CLIENT
-		Network::Client::Client client;
-#endif
+	#if SERVER
+			Network::Server::Server server;
+	#elif CLIENT
+			Network::Client::Client client;
+	#endif
 
-#if SERVER || CLIENT
-	public:
-		Pong(const std::string& ServerIp = "127.0.0.1", const std::string& ServerPort = "1234");
-		bool OnUserDestroy() override;	// called when the user clicks the exit button
-#else
-	public:
-		Pong();
-#endif
+	#if SERVER || CLIENT
+		public:
+			Pong(const std::string& ServerIp = "127.0.0.1", const std::string& UDPServerPort = "1234", const std::string& TCPServerPort = "1235");
+			bool OnUserDestroy() override;	// called when the user clicks the exit button
+	#else
+		public:
+			Pong();
+	#endif
 
-	private:
-		void DrawDivision();
-		void Init();
+		private:
+			void DrawDivision();
+			void Init();
 
-	public:
-		bool OnUserCreate() override;
-		bool OnUserUpdate(float) override;
-		virtual ~Pong();
+		public:
+			bool OnUserCreate() override;
+			bool OnUserUpdate(float) override;
+			virtual ~Pong();
 
-#if CLIENT
-		void UpdatePositions();
-#endif
+	#if CLIENT
+			void UpdatePositions();
+	#endif
 	};
 }
 

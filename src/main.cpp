@@ -5,17 +5,17 @@ int main(int argc, char* argv[]) {
 	std::cout << "I'm a server!" << std::endl;
 
 	std::unique_ptr<Pong::Pong> pong;
-	if(argc == 2) {
-		pong = std::make_unique<Pong::Pong>("127.0.0.1", argv[1]);
+	if(argc == 3) {
+		pong = std::make_unique<Pong::Pong>("127.0.0.1", argv[1], argv[2]);
 	}
 	else if(argc == 1) {
 		pong = std::make_unique<Pong::Pong>();
 	}
 	else {
-		std::cout << "Usage: ./Server <port>" << std::endl;
+		std::cout << "Usage: ./Server <UDP port> <TCP port>" << std::endl;
 	}
 
-	if (pong->Construct(640, 320, 2, 2)) { // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
+	if (pong->Construct(640, 360, 2, 2)) { // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
 		pong->Start();
 	}
 	
@@ -27,14 +27,14 @@ int main(int argc, char* argv[]) {
 	std::cout << "I'm a client!" << std::endl;
 
 	std::unique_ptr<Pong::Pong> pong;
-	if(argc == 3) {
-		pong = std::make_unique<Pong::Pong>(argv[1], argv[2]);
+	if(argc == 4) {
+		pong = std::make_unique<Pong::Pong>(argv[1], argv[2], argv[3]);
 	}
 	else if(argc == 1) {
 		pong = std::make_unique<Pong::Pong>();
 	}
 	else {
-		std::cout << "Usage: ./Client <ip_address> <port>" << std::endl;
+		std::cout << "Usage: ./Client <ip_address> <UDP port> <TCP port>" << std::endl;
 	}
 
 	if (pong->Construct(640, 360, 2, 2)) { // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels

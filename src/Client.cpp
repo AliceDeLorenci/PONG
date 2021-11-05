@@ -4,43 +4,19 @@
 #include <errno.h>
 
 namespace Pong::Network::Client {
-	Client::Client(const std::string& ServerIp, const std::string& ServerPort) {
+	Client::Client(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) {
 		
-		if(!ServerPort.empty() && ServerPort.find_first_not_of("0123456789") == std::string::npos) { // if port is a number
-			port = std::stoi(ServerPort);
-			if(port <= 0 || port > 65535) {
-				std::cout << "[Error]: Port must be in range (0, 65535]!" << std::endl;
-				exit(FAIL);
-			}
-		}
-		else {
-			std::cout << "[Error]: Port must be a number!" << std::endl;
-			exit(FAIL);
-		}
+		ports[UDP] = CheckPort( UDPServerPort );
+		ports[TCP] = CheckPort( TCPServerPort );
+		auto convertedIp = CheckIp(ServerIp);
 		
-		ip = ServerIp;
-		in_addr_t convertedIp;
-		auto errCode = inet_pton(AF_INET, ip.c_str(), (void*) &convertedIp);
-		if(errCode == 0) {
-			std::cout << "[Error]: Invalid IP address!" << std::endl;
-			exit(FAIL);
-		}
-		else if(errCode == -1) {
-			std::cout << "inet_pton error!" << std::endl;
-			exit(FAIL);
-		}
-
-		// Allocate a UDP socket for the client
-		if ((udp_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-			perror("Socket creation failure.");
-			exit(FAIL);
-		}
-
 		// Server information
-		memset(&server_addr, 0, sizeof(server_addr));
-		server_addr.sin_family = AF_INET;
-		server_addr.sin_port = htons(port);
-		server_addr.sin_addr.s_addr = convertedIp;
+		for( int TYPE = UDP; TYPE <= TCP; TYPE++ ){
+			memset( &server_addr[TYPE], 0, sizeof(server_addr[TYPE]) );
+			server_addr[TYPE].sin_family = AF_INET;
+			server_addr[TYPE].sin_port = htons( ports[TYPE] );
+			server_addr[TYPE].sin_addr.s_addr = convertedIp;
+		}
 
 		memset(&msg, 0, sizeof(msg));
 
@@ -51,38 +27,55 @@ namespace Pong::Network::Client {
 	Client::~Client() {}
 
 	int Client::Connect() {
+
+		// TCP
+		// Server: "<player number>"
+		sockets[TCP] = socket( AF_INET, SOCK_STREAM, 0 );
+
+		if( connect( sockets[TCP], (struct sockaddr*)&(server_addr[TCP]), sizeof(server_addr[TCP]) ) == -1 ){
+			perror("Error stablishing TCP connection");
+			return 1;
+		}
+
+		// Receive player number
+		char incoming_msg[MAXLINE];
+		int n = recv( sockets[TCP], incoming_msg, MAXLINE, 0 );
+    	incoming_msg[n] = '\0';
+		player_num = atoi( incoming_msg );
+
+		std::cout << "SERVER SAID: " << incoming_msg << std::endl;
+
+
+		// UDP
+		// Client: "I am <player number>"
+
+		sockets[UDP] = socket( AF_INET, SOCK_DGRAM, 0 );
 		char buffer[MAXLINE];
+		sprintf( buffer, "I AM %d", player_num );
 
-		unsigned int len = sizeof(server_addr);
-		sendto(udp_socket, (const char*)CONNECT_HANDSHAKE, strlen(CONNECT_HANDSHAKE), MSG_CONFIRM,
-			(const struct sockaddr*)&server_addr, len);
-
-		// Receives player number
-		len = sizeof(server_addr);
-		int n = recvfrom(udp_socket, (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&server_addr, &len);
-
-		buffer[n] = '\0';
-		player_num = atoi(buffer);
+		unsigned int len = sizeof( server_addr[UDP] );
+		sendto( sockets[UDP], buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr*)&( server_addr[UDP] ), len);
 
 		return 0;
 	}
 
 	void Client::StartListeningUDP() {
-		thread_listen = std::thread(&Client::ListenUDP, this);
-		thread_listen.detach();
+		udp_thread_listen = std::thread(&Client::ListenUDP, this);
+		udp_thread_listen.detach();
 	}
 
 	void Client::ListenUDP() {
 		while ( !quit_listener ) {
-			unsigned int len = sizeof(server_addr);
-			recvfrom(udp_socket, &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr, &len);
+			unsigned int len = sizeof(server_addr[UDP]);
+			recvfrom( sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)& server_addr[UDP], &len);
 			msg.Deserialize();
-
+			/*
 			if( strcmp( msg.type, USER_DESTROY ) ==  0 ){
 				quit = true;
 				server_quit = true;
 				quit_listener = true;
 			}
+			*/
 		}
 	}
 
@@ -93,16 +86,9 @@ namespace Pong::Network::Client {
 		char client_msg[MAXLINE];
 		sprintf(client_msg, "KEYS %d %d %d", player_num, keys[UP], keys[DOWN]);
 
-		/*
-		if (keys[UP] || keys[DOWN]) {
-			printf("UP: %d - DOWN: %d\n", keys[UP], keys[DOWN]);
-		}
-		*/
-
 		// Sends game configuration
-		unsigned int len = sizeof(server_addr);
-		if (sendto(udp_socket, (const char*)client_msg, strlen(client_msg), MSG_CONFIRM,
-			(const struct sockaddr*)&server_addr, len) < 0) {
+		unsigned int len = sizeof( server_addr[UDP] );
+		if (sendto( sockets[UDP], (const char*)client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr*)& server_addr[UDP], len) < 0) {
 			perror("Error sending msg\n");
 			return 1;
 		}
@@ -121,9 +107,8 @@ namespace Pong::Network::Client {
 		char client_msg[MAXLINE];
 		strcpy( client_msg, USER_DESTROY );
 
-		unsigned int len = sizeof( server_addr );
-		if (sendto(udp_socket, (const char*)client_msg, strlen(client_msg), MSG_CONFIRM,
-			(const struct sockaddr*)&server_addr, len) < 0) {
+		unsigned int len = sizeof( server_addr[TCP] );
+		if (send(sockets[TCP], (const char*)client_msg, strlen(client_msg), 0 ) < 0) {
 			perror("Error sending quit msg\n");
 			return 1;
 		}

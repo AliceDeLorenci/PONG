@@ -18,13 +18,15 @@ Também é possível jogar Offline:
     
 # Protocolo
 
-**Cliente** tenta conectar servidor para participar do jogo:
-
-"WHO AM I"
+**Cliente** inicia conexão TCP com o servidor para participar do jogo:
 
 **Servidor** responde com *player number* do cliente:
 
-"<number>"
+TCP: "<number>"
+
+**Cliente** inicia conexão UDP (para que o servidor saiba o endereço):
+
+UDP: "I AM <number>"
 
 **Cliente** envia informação das teclas:
 

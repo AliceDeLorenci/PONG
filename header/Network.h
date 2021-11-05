@@ -1,11 +1,18 @@
 #if defined CLIENT || defined SERVER
 #pragma once
-#ifndef GAMEINFO_H
-#define GAMEINFO_H
+#ifndef NETWORK_H
+#define NETWORK_H
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <iostream>
 
+namespace Pong::Network {
+	constexpr int FAIL = 1;
+	int CheckPort( const std::string& );
+	in_addr_t CheckIp( const std::string& );
+}
 namespace Pong::Network::GameInfo {
 	struct GameInfo {
-		char type[5];
 		int xPlayer1;
 		int yPlayer1;
 		int xPlayer2;
@@ -18,7 +25,10 @@ namespace Pong::Network::GameInfo {
 		void Serialize();
 		void Deserialize();
 	};
+
+	
+	
 }
 
-#endif  // !GAMEINFO_H
+#endif  // !NETWORK_H
 #endif  // CLIENT || SERVER

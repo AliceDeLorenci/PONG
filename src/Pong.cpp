@@ -2,13 +2,16 @@
 
 namespace Pong {
 #if SERVER
-	Pong::Pong(const std::string& ServerIp, const std::string& ServerPort) : server(ServerIp, ServerPort) {
+	Pong::Pong(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) : server(ServerIp, UDPServerPort, TCPServerPort) {
 		sAppName = "Pong -- Server";
 	}
 
 	bool Pong::OnUserCreate() {
-		while (server.AcceptClient(Network::Server::ClientOne)) {}
-		while (server.AcceptClient(Network::Server::ClientTwo)) {}
+		//while ( server.AcceptClient(Network::Server::ClientOne) ) {}
+		//while ( server.AcceptClient(Network::Server::ClientTwo) ) {}
+		
+		server.AcceptClient(Network::Server::ClientOne);
+		server.AcceptClient(Network::Server::ClientTwo);
 
 		server.StartListeningUDP();
 
@@ -87,7 +90,7 @@ namespace Pong {
 	
 
 #elif CLIENT
-	Pong::Pong(const std::string& ServerIp, const std::string& ServerPort) : client(ServerIp, ServerPort) {
+	Pong::Pong(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) : client(ServerIp, UDPServerPort, TCPServerPort) {
 		sAppName = "Pong -- Client";
 	}
 
