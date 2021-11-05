@@ -33,7 +33,7 @@ namespace Pong::Network::Client {
 		sockets[TCP] = socket( AF_INET, SOCK_STREAM, 0 );
 
 		if( connect( sockets[TCP], (struct sockaddr*) &server_addr[TCP], sizeof(server_addr[TCP]) ) == -1 ){
-			perror("[Error] Failed to stablish a TCP connection!\n");
+			perror("[Error] Failed to stablish a TCP connection. The server may be disconnected.\n");
 			return 1;
 		}
 

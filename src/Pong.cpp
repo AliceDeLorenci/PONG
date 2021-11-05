@@ -102,7 +102,9 @@ namespace Pong {
 	}
 
 	bool Pong::OnUserCreate() {
-		client.Connect();
+		if( client.Connect() == FAIL )
+			exit( EXIT_FAILURE );
+		
 		client.StartListening();
 
 		Init();
