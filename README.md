@@ -38,7 +38,7 @@ Por padrão são utilizadas as portas 1234 e 1235, respectivamente. Similarmente
 
     ./Client <endereço IP> <porta UDP> <porta TCP>
     
-Por padrão é utlizado o *local host* e as portas suprecitadas.
+Por padrão é utlizado o *local host* e as portas supracitadas.
     
 ## Dependências
 
@@ -70,14 +70,14 @@ Uma vez estabelecida a conexão TCP, deve ser estabelecida uma conexão UDP, por
 
 - **Servidor** envia configuração do jogo:
 
-        "<xPlayer1> <yPlayer1> <xPlayer2> <yPlayer2> <xBall> <yBall> <scorePlayer1> <scorePlayer2>"
+        "<xPlayer1><yPlayer1><xPlayer2><yPlayer2><xBall><yBall><scorePlayer1><scorePlayer2>"
 
 ### Encerramento do jogo
 
-Fechando uma das janelas, seja do servidor, seja de um dos clientes, é enviada aos demais uma mensagem anunciando o fim do jogo aos demais componenetes por meio da conexão TCP:
+Fechando uma das janelas, seja do servidor, seja de um dos clientes, é enviada aos demais uma mensagem anunciando o fim do jogo por meio da conexão TCP:
         
         "EXIT"
 
 ## Debug
 
-Instead of just using `cmake ..` use `cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..`. Don't forget to delete the cache when switching between the build types.
+Ao invés de só usar `cmake ..` use `cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..`. Não se esqueça de deletar o cacho quando quiser trocar de tipo de build.
