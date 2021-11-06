@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (pong->Construct(640, 360, 2, 2, false, true, true)) {  // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
+    if (pong->Construct(640, 360, 2, 2, false, false, false)) {  // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
         pong->Start();
     }
 
@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (pong->Construct(640, 360, 2, 2, false, true, true)) {  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
+    if (pong->Construct(640, 360, 2, 2, false, false, false)) {  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
         pong->Start();
     }
 
@@ -72,7 +72,7 @@ int main() {
     spdlog::info("Initializing Offline Game...");
 
     std::unique_ptr<Pong::Pong> pong = std::make_unique<Pong::Pong>();
-    if (pong->Construct(640, 360, 2, 2, false, true, true))  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
+    if (pong->Construct(640, 360, 2, 2, false, false, false))  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
         pong->Start();
 
     return 0;
