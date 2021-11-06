@@ -32,11 +32,11 @@ Também é possível jogar Offline:
     
 As portas do servidor dedicadas às conexões UDP e TCP podem ser indicadas por meio da linha de comando:
 
-    ./Server \<porta UDP> \<porta TCP>
+    ./Server <porta UDP> <porta TCP>
     
 Por padrão são utilizadas as portas 1234 e 1235, respectivamente. Similarmente, o cliente pode indicar o endereço de IP do servidor e as portas utilizadas por ele para as conexões UDP e TCP:
 
-    ./Client \<endereço IP> \<porta UDP> \<porta TCP>
+    ./Client <endereço IP> <porta UDP> <porta TCP>
     
 Por padrão é utlizado o *local host* e as portas suprecitadas.
     
@@ -57,20 +57,20 @@ Uma vez estabelecida a conexão TCP, deve ser estabelecida uma conexão UDP, por
 - **Cliente** inicia conexão TCP com o servidor para participar do jogo.
 - **Servidor** responde com *player number* do cliente:
 
-        "\<number>"
+        "<number>"
 - **Cliente** inicia conexão UDP:
 
-        "I AM \<player number>"
+        "I AM <player number>"
 
 ### Fluxo de dados 
 
 - **Cliente** envia informação das teclas:
 
-        "KEYS\<player_number>\<key_up_bool>\<key_down_bool>"
+        "KEYS<player_number><key_up_bool><key_down_bool>"
 
 - **Servidor** envia configuração do jogo:
 
-        "\<xPlayer1> \<yPlayer1> \<xPlayer2> \<yPlayer2> \<xBall> \<yBall> \<scorePlayer1> \<scorePlayer2>"
+        "<xPlayer1> <yPlayer1> <xPlayer2> <yPlayer2> <xBall> <yBall> <scorePlayer1> <scorePlayer2>"
 
 ### Encerramento do jogo
 
