@@ -39,17 +39,15 @@ namespace Pong::Network::Server {
 
     class Server {
      private:
+        std::array<bool, 4> keys = {0, 0, 0, 0};  // 1 = held
+
         std::array<std::thread, 2> thread_listen;       // thread_listen[CONNECTION TYPE] thread responsible for listening to clients
-        std::thread temporary_listener;                 // while only one client is connected, listen to quitting messages from him
         std::array<struct sockaddr_in, 2> UDP_clients;  // UDP_clients[ClientNum]
         std::array<int, 2> TCP_clients = {-1, -1};      // TCP_clients[ClientNum]
-        std::array<bool, 4> keys = {0, 0, 0, 0};        // 1 = held
-
-        std::array<int, 2> ports;    // ports[CONNECTION TYPE]
-        std::array<int, 2> sockets;  // sockets[CONNECTION TYPE]
-
-        std::string ip;         // Server IP
-        in_addr_t convertedIp;  // Server IP converted to in_addr_t
+        std::array<int, 2> ports;                       // ports[CONNECTION TYPE]
+        std::array<int, 2> sockets;                     // sockets[CONNECTION TYPE]
+        std::string ip;                                 // Server IP
+        in_addr_t convertedIp;                          // Server IP converted to in_addr_t
 
         bool client_quit;    // quit flag, set when a client starts the quitting process
         bool quit_listener;  // used to quit the listener thread
@@ -76,6 +74,8 @@ namespace Pong::Network::Server {
 
         int AnnounceEnd(int);  // Order every client to quit
         void QuitListener();   // Sets the quit_listener flag
+
+        std::string GetClientsIp();
 
         GameInfo::GameInfo msg;  // Message sent to client
     };

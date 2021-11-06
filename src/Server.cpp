@@ -60,6 +60,7 @@ namespace Pong::Network::Server {
         // Says which player the client is
         const char* client_msg = std::to_string(clientNum).c_str();
         send(TCP_clients[clientNum], client_msg, strlen(client_msg), 0);
+        spdlog::trace("Sent to client {} using TCP: {}", clientNum, client_msg);
 
         // UDP
         // Client: "I am <player number>"
@@ -70,6 +71,7 @@ namespace Pong::Network::Server {
             unsigned len = sizeof(&(UDP_clients[clientNum]));
             int n = recvfrom(sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&UDP_clients[clientNum], &len);
             buffer[n] = '\0';
+            spdlog::trace("Received from a client using UDP: {}", buffer);
 
             if (!strncmp(buffer, NEW_UDP_CLIENT, strlen(NEW_UDP_CLIENT)))
                 continue;
@@ -104,18 +106,18 @@ namespace Pong::Network::Server {
             socklen_t len = sizeof(client_addr);
             memset(&client_addr, 0, sizeof(client_addr));
             int n = recvfrom(sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&client_addr, &len);
-
             buffer[n] = '\0';
+            spdlog::trace("Received from a client using UDP: {}", buffer);
 
             if (strncmp(INCOMING_KEYS, buffer, strlen(INCOMING_KEYS)) == 0) {
                 char type[5];
-                int isPlayerOne;
+                int isPlayerTwo;
                 int up;
                 int down;
 
-                sscanf(buffer, "%s %d %d %d", type, &isPlayerOne, &up, &down);
+                sscanf(buffer, "%s %d %d %d", type, &isPlayerTwo, &up, &down);
 
-                if (isPlayerOne) {
+                if (!isPlayerTwo) {
                     keys[W] = up;
                     keys[S] = down;
                 } else {
@@ -134,13 +136,14 @@ namespace Pong::Network::Server {
 
                 char buffer[MAXLINE];
                 int n = recv(TCP_clients[client], buffer, MAXLINE, 0);
-
                 if (n == -1) continue;
                 buffer[n] = '\0';
+                spdlog::trace("Received from client {} using TCP: {}", client, buffer);
 
                 if (strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0) {
-                    spdlog::info("Client {} disconnected", client);
+                    spdlog::info("Player {} disconnected", client + 1);
 
+                    TCP_clients[client] = -1;
                     quit = true;
                     client_quit = true;
                     quit_listener = true;
@@ -152,11 +155,14 @@ namespace Pong::Network::Server {
 
     int Server::SendPosition(int client_num) {
         socklen_t len = sizeof(UDP_clients[client_num]);
+        spdlog::trace("Sending to client {} using TCP: {} {} {} {} {} {} {} {}", client_num, msg.xPlayer1, msg.yPlayer1, msg.xPlayer2, msg.yPlayer2, msg.xBall, msg.yBall, msg.scorePlayer1, msg.scorePlayer2);
         msg.Serialize();
         if (sendto(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_CONFIRM, (const struct sockaddr*)&UDP_clients[client_num], len) < 0) {
+            spdlog::error("Could not send position to client {}!", client_num);
             return 1;
         }
         msg.Deserialize();
+        spdlog::trace("Sent position to client {}", client_num);
 
         return 0;
     }
@@ -164,12 +170,13 @@ namespace Pong::Network::Server {
     int Server::AnnounceEnd(int client_num) {
         char client_msg[MAXLINE];
         strcpy(client_msg, USER_DESTROY);
-
+        spdlog::trace("Sending to client {} using TCP: {}", client_num, client_msg);
         if (send(TCP_clients[client_num], (const char*)client_msg, strlen(client_msg), 0) < 0) {
-            spdlog::error("Failed to send quit message to a client!");
+            spdlog::error("Failed to send quit message to client {}!", client_num);
             if (errno) perror("");
             return 1;
         }
+        spdlog::trace("Sent quit msg to client {}", client_num);
 
         return 0;
     }
@@ -177,7 +184,20 @@ namespace Pong::Network::Server {
     bool Server::GetKey(int key_num) { return keys[key_num]; }
     bool Server::GetQuit() { return quit; }
     bool Server::GetClientQuit() { return client_quit; }
-    void Server::QuitListener() { quit_listener = true; }
-    bool Server::IsClientConnected(int client) { return (TCP_clients[client] < 0) ? false : true; }
+    bool Server::IsClientConnected(int client) { return !(TCP_clients[client] < 0); }
+    void Server::QuitListener() {
+        quit_listener = true;
+        spdlog::info("Stopped receiveing players commands!");
+    }
+
+    std::string Server::GetClientsIp() {
+        std::string retval;
+        for (int i = ClientOne; i <= ClientTwo; i++) {
+            char ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &UDP_clients[i], ip, INET_ADDRSTRLEN);
+            retval += "Client " + std::to_string(i + 1) + ": " + ip + '\n';
+        }
+        return retval;
+    }
 }  // namespace Pong::Network::Server
 #endif

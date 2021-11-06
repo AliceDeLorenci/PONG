@@ -19,26 +19,33 @@ namespace Pong {
 
     void Pong::SetUpConnections() {
         for (int client = Network::Server::ClientOne; client <= Network::Server::ClientTwo; client++) {
+            spdlog::info("Waiting for player {}...", client + 1);
             if (server.AcceptClient(client) == FAIL)
                 return;
+            spdlog::info("Connected to player {}!", client + 1);
         }
-
+        spdlog::info("Starting the game...");
         server.StartListeningUDP();
 
         Init();
-
         create = true;
+        spdlog::info("Game started!");
     }
 
     bool Pong::OnUserUpdate(float fElapsedTime) {
         // When OnUserUpdate returns false the PixelGameEngine exits (calls on UserDestroy)
         if (server.GetQuit()) {
+            spdlog::info("Starting to close...");
             return false;
         }
 
+        Clear(olc::BLACK);
         // Only start the game after both clients connected
-        if (!create)
+        if (!create) {
+            std::string status = "Waiting for Players";
+            DrawString(ScreenWidth() / 2 - GetTextSize(status).x, ScreenHeight() / 2 - GetTextSize(status).y, status, olc::GREEN, 2);
             return true;
+        }
 
         // User input
         if (server.GetKey(Network::Server::W))
@@ -71,6 +78,15 @@ namespace Pong {
         server.SendPosition(Network::Server::ClientOne);
         server.SendPosition(Network::Server::ClientTwo);
 
+        std::string playersIp = server.GetClientsIp();
+        DrawString(ScreenWidth() / 2 - GetTextSize(playersIp).x, int32_t(PADDING), playersIp, olc::GREEN, 2);
+
+        std::string scoreLine = "Player 1: " + std::to_string(score[PlayerOne]) + '\n' + "Player 2: " + std::to_string(score[PlayerTwo]);
+        DrawString(ScreenWidth() / 2 - GetTextSize(scoreLine).x, ScreenHeight() - GetTextSize(scoreLine).y * 2 - int32_t(PADDING), scoreLine, olc::GREEN, 2);
+
+        std::string status = "Game Running";
+        DrawString(ScreenWidth() / 2 - GetTextSize(status).x, ScreenHeight() / 2 - GetTextSize(status).y, status, olc::GREEN, 2);
+
         return true;
     }
 
@@ -79,14 +95,16 @@ namespace Pong {
 	 * Announces to the clients that the game has ended.
 	***/
     bool Pong::OnUserDestroy() {
-        spdlog::info("Disconnecting");
-
+        spdlog::info("Disconnecting...");
         server.QuitListener();
 
-        if (server.IsClientConnected(Network::Server::ClientOne))
-            server.AnnounceEnd(Network::Server::ClientOne);
-        if (server.IsClientConnected(Network::Server::ClientTwo))
-            server.AnnounceEnd(Network::Server::ClientTwo);
+        for (int client = Network::Server::ClientOne; client <= Network::Server::ClientTwo; client++) {
+            if (server.IsClientConnected(client)) {
+                spdlog::info("Asking player {} to disconnect...", client + 1);
+                server.AnnounceEnd(client);
+                spdlog::info("Player {} disconnected!", client + 1);
+            }
+        }
 
         return true;
     }
@@ -119,7 +137,7 @@ namespace Pong {
     bool Pong::OnUserUpdate(float fElapsedTime) {
         // When OnUserUpdate returns false the PixelGameEngine exits
         if (client.GetQuit()) {
-            // Perhaps print a message on the screen and wait for some user action
+            spdlog::info("Quitting...");
             return false;
         }
 
@@ -164,11 +182,12 @@ namespace Pong {
 	***/
     bool Pong::OnUserDestroy() {
         spdlog::info("Disconnecting...");
-
         client.QuitListener();
 
         if (!client.GetServerQuit()) {  // the quitting action didn't start with the server
+            spdlog::info("Telling the server to quit...");
             client.AnnounceEnd();
+            spdlog::info("Told server to quit!");
         }
         return true;
     }
@@ -181,6 +200,7 @@ namespace Pong {
     bool Pong::OnUserCreate() {
         Init();
 
+        spdlog::info("Game started! Good luck and have fun!");
         return true;
     }
 

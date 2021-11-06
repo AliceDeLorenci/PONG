@@ -28,6 +28,7 @@ namespace Pong::Network::Client {
     Client::~Client() {}
 
     int Client::Connect() {
+        spdlog::info("Trying to connect to the server...");
         // TCP
         // Server: "<player number>"
         sockets[TCP] = socket(AF_INET, SOCK_STREAM, 0);
@@ -42,6 +43,7 @@ namespace Pong::Network::Client {
         char incoming_msg[MAXLINE];
         int n = recv(sockets[TCP], incoming_msg, MAXLINE, 0);
         incoming_msg[n] = '\0';
+        spdlog::trace("Received from server using TCP {}", incoming_msg);
         player_num = atoi(incoming_msg);
 
         // UDP
@@ -51,7 +53,17 @@ namespace Pong::Network::Client {
         sprintf(buffer, "I AM %d", player_num);
 
         socklen_t len = sizeof(server_addr[UDP]);
-        sendto(sockets[UDP], buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr*)&server_addr[UDP], len);
+        spdlog::trace("Sending authentication to the server using UDP: {}", buffer);
+        if (sendto(sockets[UDP], buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr*)&server_addr[UDP], len) < 0) {
+            spdlog::error("Failed to authenticate to the server using UDP!");
+            if (errno) perror("");
+            return 1;
+        }
+        spdlog::trace("Sent authentication to the server using UDP");
+
+        spdlog::info("Connected to the server as player {}!", player_num + 1);
+        if (player_num == 0)
+            spdlog::info("Waiting for player 2...");
 
         return 0;
     }
@@ -65,10 +77,16 @@ namespace Pong::Network::Client {
     }
 
     void Client::ListenUDP() {
+        static bool gameStarted = false;
         while (!quit_listener) {
             socklen_t len = sizeof(server_addr[UDP]);
             recvfrom(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr[UDP], &len);
+            if (!gameStarted) {
+                spdlog::info("Game started! Good luck and have fun!");
+                gameStarted = true;
+            }
             msg.Deserialize();
+            spdlog::trace("Received from server using UDP: {} {} {} {} {} {} {} {}", msg.xPlayer1, msg.yPlayer1, msg.xPlayer2, msg.yPlayer2, msg.xBall, msg.yBall, msg.scorePlayer1, msg.scorePlayer2);
         }
     }
 
@@ -79,6 +97,7 @@ namespace Pong::Network::Client {
             int n = recv(sockets[TCP], buffer, MAXLINE, 0);
             if (n == -1) continue;
             buffer[n] = '\0';
+            spdlog::trace("Received from server using TCP: {}", buffer);
 
             if (strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0) {
                 spdlog::info("Server disconnected");
@@ -95,13 +114,14 @@ namespace Pong::Network::Client {
         char client_msg[MAXLINE];
         sprintf(client_msg, "KEYS %d %d %d", player_num, keys[UP], keys[DOWN]);
 
-        // Sends game configuration
         socklen_t len = sizeof(server_addr[UDP]);
+        spdlog::trace("Sending keys to server using UDP: {}", client_msg);
         if (sendto(sockets[UDP], (const char*)client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr*)&server_addr[UDP], len) < 0) {
             spdlog::error("Failed to send key presses!");
             if (errno) perror("");
             return 1;
         }
+        spdlog::trace("Successfully sent keys to server using UDP");
         return 0;
     }
 
@@ -113,18 +133,23 @@ namespace Pong::Network::Client {
         // build string
         char client_msg[MAXLINE];
         strcpy(client_msg, USER_DESTROY);
+        spdlog::trace("Asking server to exit with TCP: {}", client_msg);
 
         if (send(sockets[TCP], (const char*)client_msg, strlen(client_msg), 0) < 0) {
             spdlog::error("Failed to send quit msg to the server");
             if (errno) perror("");
             return 1;
         }
+        spdlog::trace("Successfully asked server to quit using TCP");
 
         return 0;
     }
 
     bool Client::GetQuit() { return quit; }
     bool Client::GetServerQuit() { return server_quit; }
-    void Client::QuitListener() { quit_listener = true; }
+    void Client::QuitListener() {
+        quit_listener = true;
+        spdlog::info("Stopped listening to the server!");
+    }
 }  // namespace Pong::Network::Client
 #endif  // CLIENT

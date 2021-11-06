@@ -27,6 +27,7 @@ int main(int argc, char* argv[]) {
         pong->Start();
     }
 
+    spdlog::info("Server finished shutting down. See you next time!");
     return 0;
 }
 
@@ -56,6 +57,7 @@ int main(int argc, char* argv[]) {
         pong->Start();
     }
 
+    spdlog::info("Client finished shutting down. See you next time!");
     return 0;
 }
 
@@ -75,6 +77,7 @@ int main() {
     if (pong->Construct(640, 360, 2, 2, false, true, true))  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
         pong->Start();
 
+    spdlog::info("Game finished shutting down. See you next time!");
     return 0;
 }
 
