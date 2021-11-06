@@ -1,5 +1,7 @@
 #include "Pong.h"
 
+#include "spdlog/spdlog.h"
+
 namespace Pong {
 #if SERVER
     Pong::Pong(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) : server(ServerIp, UDPServerPort, TCPServerPort) {
@@ -77,9 +79,7 @@ namespace Pong {
 	 * Announces to the clients that the game has ended.
 	***/
     bool Pong::OnUserDestroy() {
-        std::string status_msg;
-        status_msg = "[STATUS] Disconnecting";
-        server.RuntimeMessage(status_msg);
+        spdlog::info("Disconnecting");
 
         server.QuitListener();
 
@@ -163,9 +163,7 @@ namespace Pong {
 	 * Announces to the server that the game has ended if the former is true.
 	***/
     bool Pong::OnUserDestroy() {
-        std::string status_msg;
-        status_msg = "[STATUS] Disconnecting";
-        client.RuntimeMessage(status_msg);
+        spdlog::info("Disconnecting...");
 
         client.QuitListener();
 

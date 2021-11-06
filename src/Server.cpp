@@ -1,6 +1,8 @@
 #if SERVER
 #include "Server.h"
 
+#include "spdlog/spdlog.h"
+
 namespace Pong::Network::Server {
     Server::Server(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort)
         : ip(ServerIp), TCP_clients({-1, -1}), client_quit(false), quit_listener(false), quit(false) {
@@ -16,7 +18,8 @@ namespace Pong::Network::Server {
 
         // Allocate a socket for the server
         if ((sockets[TYPE] = socket(AF_INET, socket_type, 0)) < 0) {
-            perror("[Error] Failed to create a server socket!\n");
+            spdlog::error("Failed to create a server socket!");
+            if (errno) perror("");
             exit(EXIT_FAILURE);
         }
 
@@ -30,14 +33,16 @@ namespace Pong::Network::Server {
 
         // Bind socket to port
         if (bind(sockets[TYPE], (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-            perror("[Error] Failed to bind a server socket!\n");
+            spdlog::error("Failed to bind a server socket!");
+            if (errno) perror("");
             exit(FAIL);
         }
 
         if (TYPE == TCP) {
             // socket in passive open mode
             if (listen(sockets[TCP], 1) == -1) {
-                perror("[Error]: Could not prepare to accept connections on listen()\n");
+                spdlog::error("Could not prepare to accept connections on listen()");
+                if (errno) perror("");
                 return 1;
             }
         }
@@ -47,7 +52,8 @@ namespace Pong::Network::Server {
 
     int Server::AcceptClient(int clientNum) {
         if ((TCP_clients[clientNum] = accept(sockets[TCP], 0, 0)) < 0) {
-            perror("[Error] failed to accept client!\n");
+            spdlog::error("Failed to accept client!");
+            if (errno) perror("");
             return 1;
         }
 
@@ -133,9 +139,7 @@ namespace Pong::Network::Server {
                 buffer[n] = '\0';
 
                 if (strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0) {
-                    std::string status_msg;
-                    status_msg = "[STATUS] Client " + std::to_string(client) + " disconnected";
-                    RuntimeMessage(status_msg);
+                    spdlog::info("Client {} disconnected", client);
 
                     quit = true;
                     client_quit = true;
@@ -162,15 +166,12 @@ namespace Pong::Network::Server {
         strcpy(client_msg, USER_DESTROY);
 
         if (send(TCP_clients[client_num], (const char*)client_msg, strlen(client_msg), 0) < 0) {
-            perror("[Error] Failed to send quit message to a client!\n");
+            spdlog::error("Failed to send quit message to a client!");
+            if (errno) perror("");
             return 1;
         }
 
         return 0;
-    }
-
-    void Server::RuntimeMessage(const std::string& msg) {
-        std::cout << msg << std::endl;
     }
 
     bool Server::GetKey(int key_num) { return keys[key_num]; }

@@ -1,6 +1,8 @@
 #if defined CLIENT || defined SERVER
 #include "Network.h"
 
+#include "spdlog/spdlog.h"
+
 namespace Pong::Network {
     int ConvertPort(const std::string& port) {
         int ret_port;
@@ -8,12 +10,13 @@ namespace Pong::Network {
         if (!port.empty() && port.find_first_not_of("0123456789") == std::string::npos) {  // if port is a number
             ret_port = std::stoi(port);
             if (ret_port <= 0 || ret_port > 65535) {
-                perror("[Error]: Port must be in range (0, 65535]!\n");
-                ;
+                spdlog::error("Port must be in range (0, 65535]!");
+                if (errno) perror("");
                 exit(FAIL);
             }
         } else {
-            perror("[Error]: Port must be a number!\n");
+            spdlog::error("Port must be a number!");
+            if (errno) perror("");
             exit(FAIL);
         }
         return ret_port;
@@ -23,10 +26,12 @@ namespace Pong::Network {
         in_addr_t convertedIp;
         auto errCode = inet_pton(AF_INET, ip.c_str(), (void*)&convertedIp);
         if (errCode == 0) {
-            perror("[Error]: Invalid IP address!\n");
+            spdlog::error("Invalid IP address!");
+            if (errno) perror("");
             exit(FAIL);
         } else if (errCode == -1) {
-            perror("[Error] inet_pton error!\n");
+            spdlog::error("inet_pton error!");
+            if (errno) perror("");
             exit(FAIL);
         }
         return convertedIp;

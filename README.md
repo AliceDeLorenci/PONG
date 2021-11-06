@@ -2,8 +2,7 @@
 
 Para compilar, basta criar uma pasta build e utilizar o CMake.
 
-    mkdir build
-    cd build
+    mkdir build && cd build
     cmake ..
     make
 
@@ -16,6 +15,10 @@ Também é possível jogar Offline:
 
     ./Offline
     
+# Dependencies
+
+* Debian: `sudo apt install freeglut3-dev libpng-dev libspdlog-dev -y`
+
 # Protocolo
 
 **Cliente** inicia conexão TCP com o servidor para participar do jogo:
@@ -41,4 +44,8 @@ UDP: "I AM <number>"
 User quits on Server:
 - ```(Server) OnUserDestroy()```: sends messages to clients announcing exit
 - ```(Server) listener thread```: end
-- ```(Clinet) OnUserUpdate()```: return false 
+- ```(Client) OnUserUpdate()```: return false
+
+# Debug
+
+Instead of just using `cmake ..` use `cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..`. Don't forget to delete the cache when switching between the build types.

@@ -6,9 +6,6 @@ project(Server)
 project(Client)
 project(Offline)
 
-# Debug
-set(CMAKE_BUILD_TYPE Debug)
-
 # At least c++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -25,6 +22,11 @@ find_package(OpenGL REQUIRED)
 find_package(X11 REQUIRED)
 find_package(PNG REQUIRED)
 
+# spdlog standalone build
+if(NOT TARGET spdlog)
+    find_package(spdlog REQUIRED)
+endif()
+
 # Add sources to this project's executable.
 file(GLOB_RECURSE sources src/*.cpp header/*.h)
 add_executable (Server ${sources})
@@ -32,9 +34,9 @@ add_executable (Client ${sources})
 add_executable (Offline ${sources})
 
 # static linking
-target_link_libraries(Server        PRIVATE -lX11 -lGL -lpthread -lpng -lstdc++fs)
-target_link_libraries(Client        PRIVATE -lX11 -lGL -lpthread -lpng -lstdc++fs)
-target_link_libraries(Offline       PRIVATE -lX11 -lGL -lpthread -lpng -lstdc++fs)
+target_link_libraries(Server        PRIVATE -lX11 -lGL -lpthread -lpng -lstdc++fs spdlog::spdlog)
+target_link_libraries(Client        PRIVATE -lX11 -lGL -lpthread -lpng -lstdc++fs spdlog::spdlog)
+target_link_libraries(Offline       PRIVATE -lX11 -lGL -lpthread -lpng -lstdc++fs spdlog::spdlog)
 
 # library include
 target_include_directories (Server  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/header/)
@@ -46,5 +48,6 @@ target_compile_definitions(Server   PRIVATE SERVER=1 CLIENT=0 OFFLINE=0)
 target_compile_definitions(Client   PRIVATE SERVER=0 CLIENT=1 OFFLINE=0)
 target_compile_definitions(Offline  PRIVATE SERVER=0 CLIENT=0 OFFLINE=1)
 
-# Build type
-set(CMAKE_BUILD_TYPE, RELEASE) # RELEASE OR DEBUG
+target_compile_definitions(Server  PUBLIC "$<$<CONFIG:Debug>:_DEBUG>")
+target_compile_definitions(Client  PUBLIC "$<$<CONFIG:Debug>:_DEBUG>")
+target_compile_definitions(Offline PUBLIC "$<$<CONFIG:Debug>:_DEBUG>")

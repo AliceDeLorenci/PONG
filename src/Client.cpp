@@ -3,6 +3,8 @@
 
 #include <errno.h>
 
+#include "spdlog/spdlog.h"
+
 namespace Pong::Network::Client {
     Client::Client(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) {
         ports[UDP] = ConvertPort(UDPServerPort);
@@ -31,7 +33,8 @@ namespace Pong::Network::Client {
         sockets[TCP] = socket(AF_INET, SOCK_STREAM, 0);
 
         if (connect(sockets[TCP], (struct sockaddr*)&server_addr[TCP], sizeof(server_addr[TCP])) == -1) {
-            perror("[Error] Failed to stablish a TCP connection. The server may be disconnected.\n");
+            spdlog::error("Failed to stablish a TCP connection. The server may be disconnected.");
+            if (errno) perror("");
             return 1;
         }
 
@@ -78,7 +81,7 @@ namespace Pong::Network::Client {
             buffer[n] = '\0';
 
             if (strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0) {
-                RuntimeMessage("[STATUS] Server disconnected");
+                spdlog::info("Server disconnected");
 
                 quit = true;
                 server_quit = true;
@@ -95,7 +98,8 @@ namespace Pong::Network::Client {
         // Sends game configuration
         socklen_t len = sizeof(server_addr[UDP]);
         if (sendto(sockets[UDP], (const char*)client_msg, strlen(client_msg), MSG_CONFIRM, (const struct sockaddr*)&server_addr[UDP], len) < 0) {
-            perror("[Error] Failed to send key presses!\n");
+            spdlog::error("Failed to send key presses!");
+            if (errno) perror("");
             return 1;
         }
         return 0;
@@ -111,15 +115,12 @@ namespace Pong::Network::Client {
         strcpy(client_msg, USER_DESTROY);
 
         if (send(sockets[TCP], (const char*)client_msg, strlen(client_msg), 0) < 0) {
-            perror("[Error] Failed to send quit msg to the server\n");
+            spdlog::error("Failed to send quit msg to the server");
+            if (errno) perror("");
             return 1;
         }
 
         return 0;
-    }
-
-    void Client::RuntimeMessage(const std::string& msg) {
-        std::cout << msg << std::endl;
     }
 
     bool Client::GetQuit() { return quit; }

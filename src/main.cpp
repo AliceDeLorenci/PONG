@@ -1,8 +1,17 @@
 #include "Pong.h"
+#include "spdlog/spdlog.h"
 
 #if SERVER
 int main(int argc, char* argv[]) {
-    std::cout << "Initializing Server..." << std::endl;
+#ifndef _DEBUG
+    spdlog::set_level(spdlog::level::info);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
+#else
+    spdlog::set_level(spdlog::level::trace);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] [thread %t] %v");
+#endif
+
+    spdlog::info("Initializing Server...");
 
     std::unique_ptr<Pong::Pong> pong;
     if (argc == 3) {
@@ -10,7 +19,8 @@ int main(int argc, char* argv[]) {
     } else if (argc == 1) {
         pong = std::make_unique<Pong::Pong>();
     } else {
-        std::cout << "Usage: ./Server <UDP port> <TCP port>" << std::endl;
+        spdlog::error("Usage: ./Server <UDP port> <TCP port>");
+        return 1;
     }
 
     if (pong->Construct(640, 360, 2, 2, false, true, true)) {  // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
@@ -22,7 +32,15 @@ int main(int argc, char* argv[]) {
 
 #elif CLIENT
 int main(int argc, char* argv[]) {
-    std::cout << "Initializing Client..." << std::endl;
+#ifndef _DEBUG
+    spdlog::set_level(spdlog::level::info);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
+#else
+    spdlog::set_level(spdlog::level::trace);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] [thread %t] %v");
+#endif
+
+    spdlog::info("Initializing Client...");
 
     std::unique_ptr<Pong::Pong> pong;
     if (argc == 4) {
@@ -30,7 +48,8 @@ int main(int argc, char* argv[]) {
     } else if (argc == 1) {
         pong = std::make_unique<Pong::Pong>();
     } else {
-        std::cout << "Usage: ./Client <ip_address> <UDP port> <TCP port>" << std::endl;
+        spdlog::error("Usage: ./Client <ip_address> <UDP port> <TCP port>");
+        return 1;
     }
 
     if (pong->Construct(640, 360, 2, 2, false, true, true)) {  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
@@ -42,7 +61,15 @@ int main(int argc, char* argv[]) {
 
 #elif OFFLINE
 int main() {
-    std::cout << "Initializing Offline Game..." << std::endl;
+#ifndef _DEBUG
+    spdlog::set_level(spdlog::level::info);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
+#else
+    spdlog::set_level(spdlog::level::trace);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] [thread %t] %v");
+#endif
+
+    spdlog::info("Initializing Offline Game...");
 
     std::unique_ptr<Pong::Pong> pong = std::make_unique<Pong::Pong>();
     if (pong->Construct(640, 360, 2, 2, false, true, true))  // Tela de tamanho 640x360 com 'pixels' formado por 2x2 pixels
@@ -53,7 +80,9 @@ int main() {
 
 #else
 int main() {
-    std::cout << "[Error] Please compile using the provided CMake!" << std::endl;
+    spdlog::set_level(spdlog::level::info);
+    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] [thread %t] %v");
+    spdlog::error("Please compile using the provided CMake!");
     return 1;
 }
 #endif
