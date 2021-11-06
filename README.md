@@ -47,25 +47,26 @@ Uma vez estabelecida a conexão TCP, deve ser estabelecida uma conexão UDP, por
 - **Cliente** inicia conexão TCP com o servidor para participar do jogo.
 - **Servidor** responde com *player number* do cliente:
 
-    "\<number>"
+        "\<number>"
 - **Cliente** inicia conexão UDP:
 
-    "I AM \<player number>"
+        "I AM \<player number>"
 
 ### Fluxo de dados 
 
 - **Cliente** envia informação das teclas:
 
-    "KEYS\<player_number>\<key_up_bool>\<key_down_bool>"
+        "KEYS\<player_number>\<key_up_bool>\<key_down_bool>"
 
 - **Servidor** envia configuração do jogo:
 
-    "\<xPlayer1> \<yPlayer1> \<xPlayer2> \<yPlayer2> \<xBall> \<yBall> \<scorePlayer1> \<scorePlayer2>"
+        "\<xPlayer1> \<yPlayer1> \<xPlayer2> \<yPlayer2> \<xBall> \<yBall> \<scorePlayer1> \<scorePlayer2>"
 
 ### Encerramento do jogo
 
 Fechando uma das janelas, seja do servidor, seja de um dos clientes, é enviada aos demais uma mensagem anunciando o fim do jogo aos demais componenetes por meio da conexão TCP:
-    "EXIT"
+        
+        "EXIT"
 
 ## Debug
 
