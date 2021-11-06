@@ -30,6 +30,16 @@ Também é possível jogar Offline:
 
     ./Offline
     
+As portas do servidor dedicadas às conexões UDP e TCP podem ser indicadas por meio da linha de comando:
+
+    ./Server \<porta UDP> \<porta TCP>
+    
+Por padrão são utilizadas as portas 1234 e 1235, respectivamente. Similarmente, o cliente pode indicar o endereço de IP do servidor e as portas utilizadas por ele para as conexões UDP e TCP:
+
+    ./Client \<endereço IP> \<porta UDP> \<porta TCP>
+    
+Por padrão é utlizado o *local host* e as portas suprecitadas.
+    
 ## Dependências
 
 * Debian: `sudo apt install freeglut3-dev libpng-dev libspdlog-dev -y`
