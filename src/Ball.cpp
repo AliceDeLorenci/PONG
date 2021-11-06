@@ -36,11 +36,22 @@ namespace Pong::Ball {
 	}
 
 	void Ball::CheckCollision(const olc::vf2d& player1Pos, const olc::vf2d& player2Pos, std::array<int, 2>& score) {
+		using namespace std::chrono;
+		static auto lastCollisionTime = high_resolution_clock::now();
+		auto curTime = high_resolution_clock::now();
+
 		auto testResolveCollision = [&](const olc::vf2d& player) {
 			if (position.x				< player.x + Player::Player::size.x &&
 				position.x + size.x		> player.x &&
 				position.y				< player.y + Player::Player::size.y &&
 				position.y + size.y		> player.y) {
+
+				// Limits the number of player collision per seconds the ball can have. Prevents increasing the speed too fast
+				// To travel a quarter of the screen, it takes ~ ScreenWidth()/(MAX_SPEED*4) seconds, so we'll be using that as a hard limit
+				if(duration_cast<milliseconds>(curTime - lastCollisionTime).count() < static_cast<int64_t>((1000.0f*pge.ScreenWidth())/(4.0f*MAX_SPEED)))
+					return;
+				lastCollisionTime = high_resolution_clock::now();
+
 				// angulo aleatorio:
 				float fAngle = distAngle(mt) + float(distDirection(mt)) * PI;
 				direction = olc::vf2d(cos(fAngle), sin(fAngle));
