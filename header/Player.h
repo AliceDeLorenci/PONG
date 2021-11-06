@@ -5,34 +5,35 @@
 #include "olcPixelGameEngine.h"
 
 namespace Pong::Player {
-	constexpr float PLAYER_SPEED = 300.0f;
-	constexpr int32_t PLAYER_WIDTH = 8;
-	constexpr int32_t PLAYER_HEIGHT = 35;
+    constexpr float PLAYER_SPEED = 300.0f;
+    constexpr int32_t PLAYER_WIDTH = 8;
+    constexpr int32_t PLAYER_HEIGHT = 35;
 
-	enum PlayerNum { PlayerOne, PlayerTwo };
+    enum PlayerNum { PlayerOne,
+                     PlayerTwo };
 
-	class Player {
-	private:
-		olc::PixelGameEngine& pge;
-		olc::vf2d position; 			// Anchor on top left corner
-		PlayerNum number;
+    class Player {
+     private:
+        olc::PixelGameEngine& pge;
+        olc::vf2d position;  // Anchor on top left corner
+        PlayerNum number;
 
-	public:
-		static const olc::vi2d size;	// Player size in pixels
-		static const float speed;		// Player speed magnitude
+     public:
+        static const olc::vi2d size;  // Player size in pixels
+        static const float speed;     // Player speed magnitude
 
-		Player(const PlayerNum playerNumber, olc::PixelGameEngine& game);
-		virtual ~Player();
+        Player(const PlayerNum playerNumber, olc::PixelGameEngine& game);
+        virtual ~Player();
 
-		void Move(const olc::vf2d&);
-		void Draw();
+        void Move(const olc::vf2d&);
+        void Draw();
 
-		// Getters
-		const olc::vf2d& Position();
+        // Getters
+        const olc::vf2d& Position();
 
-		// Setters
-		void SetPosition(int, int);
-	};
-}
+        // Setters
+        void SetPosition(int, int);
+    };
+}  // namespace Pong::Player
 
-#endif // !PLAYER_H
+#endif  // !PLAYER_H

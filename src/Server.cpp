@@ -2,257 +2,181 @@
 #include "Server.h"
 
 namespace Pong::Network::Server {
-	Server::Server(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) {
+    Server::Server(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort)
+        : ip(ServerIp), TCP_clients({-1, -1}), client_quit(false), quit_listener(false), quit(false) {
+        CreateConnection(UDP, UDPServerPort);
+        CreateConnection(TCP, TCPServerPort);
+    }
+    Server::~Server() {}
 
-		ip = ServerIp;
-		CreateConnection( UDP, UDPServerPort );
-		CreateConnection( TCP, TCPServerPort );
+    int Server::CreateConnection(int TYPE, const std::string& ServerPort) {
+        ports[TYPE] = ConvertPort(ServerPort);
 
-		TCP_clients = { -1, -1 };
-
-		connection_success = false;
-		client_quit = false;
-		quit_listener = false;
-		quit = false;
-	}
-	Server::~Server() {}
-
-	int Server::CreateConnection( int TYPE, const std::string& ServerPort ){
-
-		ports[TYPE] = CheckPort( ServerPort );
-
-		int socket_type;
-		if( TYPE == UDP )
-			socket_type = SOCK_DGRAM;
-		else
-			socket_type = SOCK_STREAM;
+        int socket_type = (TYPE == UDP) ? SOCK_DGRAM : SOCK_STREAM;
 
         // Allocate a socket for the server
-        if( ( sockets[TYPE] = socket( AF_INET, socket_type, 0 ) ) < 0 ){
+        if ((sockets[TYPE] = socket(AF_INET, socket_type, 0)) < 0) {
             perror("[Error] Failed to create a server socket!\n");
             exit(EXIT_FAILURE);
-        }  
+        }
 
-		// Assign a port and IP address to the server socket
-		auto convertedIp = CheckIp( ip );
-		struct sockaddr_in addr;
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons( ports[TYPE] );
-		addr.sin_addr.s_addr = convertedIp;
-		memset(&addr.sin_zero, 0, sizeof(addr.sin_zero));
+        // Assign a port and IP address to the server socket
+        auto convertedIp = ConvertIp(ip);
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(ports[TYPE]);
+        addr.sin_addr.s_addr = convertedIp;
+        memset(&addr.sin_zero, 0, sizeof(addr.sin_zero));
 
-		// Bind socket to port
-		if (bind( sockets[TYPE], (struct sockaddr*) &addr, sizeof(addr)) < 0 ) {
-			perror("[Error] Failed to bind a server socket!\n");
-			exit(FAIL);
-		}
+        // Bind socket to port
+        if (bind(sockets[TYPE], (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+            perror("[Error] Failed to bind a server socket!\n");
+            exit(FAIL);
+        }
 
-		if( TYPE == TCP ){
-			// socket in passive open mode
-			if( listen( sockets[TCP], 1 ) == -1 ) {
-				perror("[Error]: Could not prepare to accept connections on listen()\n");
-    			return 1;
-  			}
-		}
-		
-		return 0;
-	}
+        if (TYPE == TCP) {
+            // socket in passive open mode
+            if (listen(sockets[TCP], 1) == -1) {
+                perror("[Error]: Could not prepare to accept connections on listen()\n");
+                return 1;
+            }
+        }
 
-	int Server::AcceptClient( int client_num ) {
+        return 0;
+    }
 
-		// TCP
-		// Server: "<player number>"
+    int Server::AcceptClient(int clientNum) {
+        if ((TCP_clients[clientNum] = accept(sockets[TCP], 0, 0)) < 0) {
+            perror("[Error] failed to accept client!\n");
+            return 1;
+        }
 
-		// Accepts a TCP client and saves the corresponding socket number
+        // Says which player the client is
+        const char* client_msg = std::to_string(clientNum).c_str();
+        send(TCP_clients[clientNum], client_msg, strlen(client_msg), 0);
 
-		/*
-		// Nonblocking socket
-		int on = 1;
-		int rc = ioctl(sockets[TCP], FIONBIO, (char *)&on);
+        // UDP
+        // Client: "I am <player number>"
 
+        // Accepts a UDP client and saves its address for future reference
+        while (true) {
+            char buffer[MAXLINE];
+            unsigned len = sizeof(&(UDP_clients[clientNum]));
+            int n = recvfrom(sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&UDP_clients[clientNum], &len);
+            buffer[n] = '\0';
 
-		while( (TCP_clients[client_num] = accept( sockets[TCP], 0, 0 )) < 0 && !quit_listener ){
-			// perror("[Error] failed to accept client!\n");
-			// return 1;
-		}
+            if (!strncmp(buffer, NEW_UDP_CLIENT, strlen(NEW_UDP_CLIENT)))
+                continue;
 
-		if( quit_listener ){
-			// so that we don't get the error: terminate called without an active exception
-			//								   Aborted (core dumped)
-			return 1;
-		}
-		*/
-		if( (TCP_clients[client_num] = accept( sockets[TCP], 0, 0 )) < 0 ){
-			perror("[Error] failed to accept client!\n");
-			return 1;
-		}
+            if (atoi(&buffer[strlen(NEW_UDP_CLIENT) + 1]) != clientNum)
+                continue;
 
+            break;
+        }
 
-		// Says which player the client is
-		const char* client_msg = std::to_string(client_num).c_str();
-		send( TCP_clients[client_num], client_msg, strlen(client_msg), 0 );
+        // makes the socket non-blocking
+        fcntl(TCP_clients[clientNum], F_SETFL, fcntl(TCP_clients[clientNum], F_GETFL) | O_NONBLOCK);
 
-		// UDP
-		// Client: "I am <player number>"
+        if (clientNum == ClientOne) {
+            thread_listen[TCP] = std::thread(&Server::ListenTCP, this);
+            thread_listen[TCP].detach();
+        }
 
-		// Accepts a UDP client and saves its address for future reference
-		while( true ){
-			char buffer[MAXLINE];
-			unsigned len = sizeof( &(UDP_clients[client_num]) );
-			int n = recvfrom( sockets[UDP], (char*) buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*) &UDP_clients[client_num], &len);
-			buffer[n] = '\0';
+        return 0;
+    }
 
-			if ( !strncmp( buffer, NEW_UDP_CLIENT, strlen(NEW_UDP_CLIENT) ) )
-				continue;
-			
-			if( atoi( &buffer[ strlen(NEW_UDP_CLIENT) + 1 ] ) != client_num )
-				continue;
+    void Server::StartListeningUDP() {
+        thread_listen[UDP] = std::thread(&Server::ListenUDP, this);
+        thread_listen[UDP].detach();
+    }
 
-			break;
-		}
+    void Server::ListenUDP() {
+        struct sockaddr_in client_addr;
 
-		if( client_num == ClientOne ){
-			temporary_listener = std::thread( &Server::ListenToOneClient, this, client_num );
-			temporary_listener.detach();
-		}
-		else{
-			connection_success = true;
-		}
+        while (!quit_listener) {
+            char buffer[MAXLINE];
+            socklen_t len = sizeof(client_addr);
+            memset(&client_addr, 0, sizeof(client_addr));
+            int n = recvfrom(sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&client_addr, &len);
 
-		return 0;
+            buffer[n] = '\0';
 
-	}
+            if (strncmp(INCOMING_KEYS, buffer, strlen(INCOMING_KEYS)) == 0) {
+                char type[5];
+                int isPlayerOne;
+                int up;
+                int down;
 
-	void Server::StartListening() {
-		thread_listen[UDP] = std::thread(&Server::ListenUDP, this);
-		thread_listen[UDP].detach();
+                sscanf(buffer, "%s %d %d %d", type, &isPlayerOne, &up, &down);
 
-		thread_listen[TCP] = std::thread(&Server::ListenTCP, this);
-		thread_listen[TCP].detach();
-	}
+                if (isPlayerOne) {
+                    keys[W] = up;
+                    keys[S] = down;
+                } else {
+                    keys[UP] = up;
+                    keys[DOWN] = down;
+                }
+            }
+        }
+    }
 
-	void Server::ListenToOneClient( int client ){
+    void Server::ListenTCP() {
+        while (!quit_listener) {
+            for (int client = ClientOne; client <= ClientTwo; client++) {
+                // check if the TCP socket is connected and ready
+                if (TCP_clients[client] != -1 && !(fcntl(TCP_clients[client], F_GETFL) & O_NONBLOCK)) continue;
 
-		// makes the socket non-blocking
-		fcntl(TCP_clients[client], F_SETFL, fcntl(TCP_clients[client], F_GETFL) | O_NONBLOCK);
+                char buffer[MAXLINE];
+                int n = recv(TCP_clients[client], buffer, MAXLINE, 0);
 
-		while ( !quit_listener && !connection_success ) {
+                if (n == -1) continue;
+                buffer[n] = '\0';
 
-			char buffer[MAXLINE];
-			int n = recv( TCP_clients[client], buffer, MAXLINE, 0 );
+                if (strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0) {
+                    std::string status_msg;
+                    status_msg = "[STATUS] Client " + std::to_string(client) + " disconnected";
+                    RuntimeMessage(status_msg);
 
-			if(n == -1) continue;
-			buffer[n] = '\0';
+                    quit = true;
+                    client_quit = true;
+                    quit_listener = true;
+                    break;
+                }
+            }
+        }
+    }
 
-			if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
-				std::string status_msg;
-				status_msg = "[STATUS] Client " + std::to_string(client) + " disconnected";
-				RuntimeMessage( status_msg );
+    int Server::SendPosition(int client_num) {
+        socklen_t len = sizeof(UDP_clients[client_num]);
+        msg.Serialize();
+        if (sendto(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_CONFIRM, (const struct sockaddr*)&UDP_clients[client_num], len) < 0) {
+            return 1;
+        }
+        msg.Deserialize();
 
-				quit = true;
-				client_quit = true;
-				quit_listener = true;
-				break;
-			}
+        return 0;
+    }
 
-		}
-	}
+    int Server::AnnounceEnd(int client_num) {
+        char client_msg[MAXLINE];
+        strcpy(client_msg, USER_DESTROY);
 
-	void Server::ListenUDP() {
-		struct sockaddr_in client_addr;
+        if (send(TCP_clients[client_num], (const char*)client_msg, strlen(client_msg), 0) < 0) {
+            perror("[Error] Failed to send quit message to a client!\n");
+            return 1;
+        }
 
-		while ( !quit_listener ) {
-			char buffer[MAXLINE];
-			unsigned int len = sizeof(client_addr);
-			memset(&client_addr, 0, sizeof(client_addr));
-			int n = recvfrom(sockets[UDP], (char*) buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*) &client_addr, &len);
+        return 0;
+    }
 
-			buffer[n] = '\0';
+    void Server::RuntimeMessage(const std::string& msg) {
+        std::cout << msg << std::endl;
+    }
 
-			if (strncmp(INCOMING_KEYS, buffer, strlen(INCOMING_KEYS)) == 0) {
-				char type[5];
-				int isPlayerOne;
-				int up;
-				int down;
-
-				sscanf(buffer, "%s %d %d %d", type, &isPlayerOne, &up, &down);
-
-				if (isPlayerOne) {
-					keys[W] = up;
-					keys[S] = down;
-				}
-				else {
-					keys[UP] = up;
-					keys[DOWN] = down;
-				}
-			}
-		}
-	}
-
-	void Server::ListenTCP( ) {
-		// makes the socket non-blocking
-		for(int client = ClientOne; client <= ClientTwo; client++)
-			fcntl(TCP_clients[client], F_SETFL, fcntl(TCP_clients[client], F_GETFL) | O_NONBLOCK);
-
-		while ( !quit_listener ) {
-			for(int client = ClientOne; client <= ClientTwo; client++) {
-				char buffer[MAXLINE];
-				int n = recv( TCP_clients[client], buffer, MAXLINE, 0 );
-
-				if(n == -1) continue;
-				buffer[n] = '\0';
-
-				if ( strncmp( USER_DESTROY, buffer, strlen(USER_DESTROY) ) == 0 ) {
-					std::string status_msg;
-					status_msg = "[STATUS] Client " + std::to_string(client) + " disconnected";
-					RuntimeMessage( status_msg );
-
-					quit = true;
-					client_quit = true;
-					quit_listener = true;
-					break;
-				}
-			}
-		}
-	}
-
-	int Server::SendPosition(int client_num) {
-		unsigned int len = sizeof(UDP_clients[client_num]);
-		msg.Serialize();
-		if (sendto(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_CONFIRM, (const struct sockaddr*) &UDP_clients[client_num], len) < 0) {
-			return 1;
-		}
-		msg.Deserialize();
-
-		return 0;
-	}
-
-	bool Server::GetKey(int key_num) {
-		return keys[key_num];
-	}
-
-	int Server::AnnounceEnd( int client_num ) {
-
-		// VERIFY whether there are clients already or not (quitting before clients established connection )
-
-		char client_msg[MAXLINE];
-		strcpy( client_msg, USER_DESTROY );
-
-		if ( send( TCP_clients[client_num], (const char*) client_msg, strlen(client_msg), 0 ) < 0 ) {
-			perror("[Error] Failed to send quit message to a client!\n");
-			return 1;
-		}
-
-		return 0;
-	}
-
-	void Server::RuntimeMessage( std::string msg ){
-		std::cout << msg << std::endl;
-	}
-
-	bool Server::GetQuit() { return quit; }
-	bool Server::GetClientQuit() { return client_quit; }
-	void Server::QuitListener() { quit_listener = true; }
-	bool Server::IsClientConnected( int client ) { return (TCP_clients[client] < 0) ? false : true; }
-}
+    bool Server::GetKey(int key_num) { return keys[key_num]; }
+    bool Server::GetQuit() { return quit; }
+    bool Server::GetClientQuit() { return client_quit; }
+    void Server::QuitListener() { quit_listener = true; }
+    bool Server::IsClientConnected(int client) { return (TCP_clients[client] < 0) ? false : true; }
+}  // namespace Pong::Network::Server
 #endif
