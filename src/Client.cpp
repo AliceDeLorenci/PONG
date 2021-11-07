@@ -100,7 +100,7 @@ namespace Pong::Network::Client {
             spdlog::trace("Received from server using TCP: {}", buffer);
 
             if (strncmp(USER_DESTROY, buffer, strlen(USER_DESTROY)) == 0) {
-                spdlog::info("Server disconnected");
+                spdlog::info("Server disconnected!");
 
                 quit = true;
                 server_quit = true;

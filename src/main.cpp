@@ -4,7 +4,7 @@
 #include "Pong.h"
 #include "spdlog/spdlog.h"
 
-static void init(std::unique_ptr<Pong::Pong>& pong) {
+static void init(std::unique_ptr<Pong::Pong>& pong, std::string_view name) {
 #ifndef _DEBUG
     spdlog::set_level(spdlog::level::info);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
@@ -15,8 +15,9 @@ static void init(std::unique_ptr<Pong::Pong>& pong) {
     struct utsname sys;
     memset(&sys, 0, sizeof sys);
     int ret = uname(&sys);
-    bool vsync = ((ret == 0) && (strstr(sys.release, "WSL"))); // fix for WSL on windows 10
+    bool vsync = ((ret >= 0) && (strstr(sys.release, "WSL")));  // fix for WSL on windows 10
 
+    spdlog::info("Initializing {}...", name);
     if (pong->Construct(640, 360, 2, 2, false, vsync, false)) {  // Tela de tamanho 640x320 com 'pixels' formado por 2x2 pixels
         pong->Start();
     }
@@ -33,8 +34,8 @@ int main(int argc, char* argv[]) {
         spdlog::error("Usage: ./Server <UDP port> <TCP port>");
         return 1;
     }
-    spdlog::info("Initializing Server...");
-    init(pong);
+
+    init(pong, "Server");
     spdlog::info("Server finished shutting down. See you next time!");
     return 0;
 #elif CLIENT
@@ -47,15 +48,15 @@ int main(int argc, char* argv[]) {
         spdlog::error("Usage: ./Client <ip_address> <UDP port> <TCP port>");
         return 1;
     }
-    spdlog::info("Initializing Client...");
-    init(pong);
+
+    init(pong, "Client");
     spdlog::info("Client finished shutting down. See you next time!");
     return 0;
 
 #elif OFFLINE
     std::unique_ptr<Pong::Pong> pong = std::make_unique<Pong::Pong>();
-    spdlog::info("Initializing Offline Game...");
-    init(pong);
+
+    init(pong, "Offline Game");
     spdlog::info("Game finished shutting down. See you next time!");
     return 0;
 
