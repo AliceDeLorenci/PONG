@@ -23,6 +23,10 @@ namespace Pong::Network::Server {
             exit(EXIT_FAILURE);
         }
 
+        int allow = 1;
+        if (setsockopt(sockets[TYPE], SOL_SOCKET, SO_REUSEADDR, &allow, sizeof(int)) < 0)  // Allows reuse of local address
+            spdlog::error("Failed to allow the reuse of local address for server socket of type {}", TYPE);
+            
         // Assign a port and IP address to the server socket
         auto convertedIp = ConvertIp(ip);
         struct sockaddr_in addr;
