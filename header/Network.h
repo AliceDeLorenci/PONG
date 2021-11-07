@@ -5,12 +5,14 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <sys/ioctl.h>
 
 #include <iostream>
 
 namespace Pong::Network {
     constexpr int FAIL = 1;
     constexpr int MAXLINE = 1024;
+    constexpr int TIMEOUT = 1000;
     static constexpr const char* LOCALHOST = "127.0.0.1";
     static constexpr const char* DEFAULT_UDP_PORT = "1234";
     static constexpr const char* DEFAULT_TCP_PORT = "1235";

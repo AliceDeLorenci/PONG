@@ -59,5 +59,6 @@
         "mutex": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0, NamespaceIndentation: All, AccessModifierOffset: -3, AllowShortEnumsOnASingleLine: true}"
+    "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0, NamespaceIndentation: All, AccessModifierOffset: -3, AllowShortEnumsOnASingleLine: true}",
+    "C_Cpp.dimInactiveRegions": false
 }

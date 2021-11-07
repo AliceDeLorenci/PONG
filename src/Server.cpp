@@ -66,10 +66,26 @@ namespace Pong::Network::Server {
         // Client: "I am <player number>"
 
         // Accepts a UDP client and saves its address for future reference
+        int dontblock = 1;
+        auto rc = ioctl(sockets[UDP], FIONBIO, (char *) &dontblock);    // nonblocking UDP socket
+        using namespace std::chrono;
+        high_resolution_clock::time_point first_attempt = high_resolution_clock::now();
         while (true) {
+            
+            // connection timeout
+            if( duration_cast<milliseconds>(high_resolution_clock::now() - first_attempt).count() > TIMEOUT ){
+                    spdlog::info("Player {} connection timed out", clientNum + 1);
+                    quit_listener = true;
+                    quit = true;
+                    return 1;
+            }
+
             char buffer[MAXLINE];
             unsigned len = sizeof(&(UDP_clients[clientNum]));
             int n = recvfrom(sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&UDP_clients[clientNum], &len);
+            if( n == -1 )
+                continue;
+
             buffer[n] = '\0';
             spdlog::trace("Received from a client using UDP: {}", buffer);
 
@@ -101,11 +117,28 @@ namespace Pong::Network::Server {
     void Server::ListenUDP() {
         struct sockaddr_in client_addr;
 
+        using namespace std::chrono;
+        std::array<high_resolution_clock::time_point, 2> last_contact = { high_resolution_clock::now(), high_resolution_clock::now() };
+
         while (!quit_listener) {
+
+            // connection timeout
+            for( int client = ClientOne; client <= ClientTwo; client ++ )
+                if( duration_cast<milliseconds>(high_resolution_clock::now() - last_contact[client]).count() > TIMEOUT ){
+                    spdlog::info("Player {} connection timed out", client + 1);
+                    quit_listener = true;
+                    quit = true;
+                    return;
+                }
+            
+
             char buffer[MAXLINE];
             socklen_t len = sizeof(client_addr);
             memset(&client_addr, 0, sizeof(client_addr));
             int n = recvfrom(sockets[UDP], (char*)buffer, MAXLINE, MSG_WAITALL, (struct sockaddr*)&client_addr, &len);
+            if( n == -1 )
+                continue;
+
             buffer[n] = '\0';
             spdlog::trace("Received from a client using UDP: {}", buffer);
 
@@ -120,9 +153,11 @@ namespace Pong::Network::Server {
                 if (!isPlayerTwo) {
                     keys[W] = up;
                     keys[S] = down;
+                    last_contact[ClientOne] = high_resolution_clock::now();
                 } else {
                     keys[UP] = up;
                     keys[DOWN] = down;
+                    last_contact[ClientTwo] = high_resolution_clock::now();
                 }
             }
         }
@@ -187,7 +222,7 @@ namespace Pong::Network::Server {
     bool Server::IsClientConnected(int client) { return !(TCP_clients[client] < 0); }
     void Server::QuitListener() {
         quit_listener = true;
-        spdlog::info("Stopped receiveing players commands!");
+        spdlog::info("Stopped receiving players commands!");
     }
 
     std::string Server::GetClientsIp() {

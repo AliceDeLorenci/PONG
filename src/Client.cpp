@@ -52,6 +52,12 @@ namespace Pong::Network::Client {
         char buffer[MAXLINE];
         sprintf(buffer, "I AM %d", player_num);
 
+        // nonblocking UDP socket
+        int dontblock = 1;
+        auto rc = ioctl(sockets[UDP], FIONBIO, (char *) &dontblock);    
+
+        // return 1;    // testing UDP connection timeout
+
         socklen_t len = sizeof(server_addr[UDP]);
         spdlog::trace("Sending authentication to the server using UDP: {}", buffer);
         if (sendto(sockets[UDP], buffer, strlen(buffer), MSG_CONFIRM, (const struct sockaddr*)&server_addr[UDP], len) < 0) {
@@ -78,13 +84,33 @@ namespace Pong::Network::Client {
 
     void Client::ListenUDP() {
         static bool gameStarted = false;
+
+        using namespace std::chrono;
+        high_resolution_clock::time_point last_contact;
+
         while (!quit_listener) {
+
+            // connection timeout
+            if( gameStarted ){
+                if(  duration_cast<milliseconds>( high_resolution_clock::now() - last_contact ).count() > TIMEOUT ){
+                    spdlog::info("Server connection timed out");
+                    quit_listener = true;
+                    quit = true;
+                    return;
+                }
+            }
+
             socklen_t len = sizeof(server_addr[UDP]);
-            recvfrom(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr[UDP], &len);
+            int n = recvfrom(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr[UDP], &len);
+            if( n == -1 )
+                continue;
+            
             if (!gameStarted) {
                 spdlog::info("Game started! Good luck and have fun!");
                 gameStarted = true;
             }
+
+            last_contact = high_resolution_clock::now();
             msg.Deserialize();
             spdlog::trace("Received from server using UDP: {} {} {} {} {} {} {} {}", msg.xPlayer1, msg.yPlayer1, msg.xPlayer2, msg.yPlayer2, msg.xBall, msg.yBall, msg.scorePlayer1, msg.scorePlayer2);
         }
