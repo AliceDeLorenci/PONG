@@ -1,8 +1,25 @@
+#include <string.h>
+#include <sys/utsname.h>
+
 #include "Pong.h"
 #include "spdlog/spdlog.h"
 
-#if SERVER
 int main(int argc, char* argv[]) {
+    
+    bool vsync = false;
+    bool cohesion = false;
+
+    struct utsname buf;
+    memset(&buf, 0, sizeof buf);
+
+    int ret = uname(&buf);
+
+    if ((ret == 0) && (strstr(buf.release, "WSL"))) {
+        vsync = true;
+        cohesion = true;
+    }
+
+#if SERVER
 #ifndef _DEBUG
     spdlog::set_level(spdlog::level::info);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
@@ -29,10 +46,8 @@ int main(int argc, char* argv[]) {
 
     spdlog::info("Server finished shutting down. See you next time!");
     return 0;
-}
 
 #elif CLIENT
-int main(int argc, char* argv[]) {
 #ifndef _DEBUG
     spdlog::set_level(spdlog::level::info);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
@@ -59,10 +74,8 @@ int main(int argc, char* argv[]) {
 
     spdlog::info("Client finished shutting down. See you next time!");
     return 0;
-}
 
 #elif OFFLINE
-int main() {
 #ifndef _DEBUG
     spdlog::set_level(spdlog::level::info);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
@@ -79,13 +92,12 @@ int main() {
 
     spdlog::info("Game finished shutting down. See you next time!");
     return 0;
-}
 
 #else
-int main() {
     spdlog::set_level(spdlog::level::info);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] [thread %t] %v");
     spdlog::error("Please compile using the provided CMake!");
     return 1;
-}
+
 #endif
+}
