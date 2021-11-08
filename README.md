@@ -11,7 +11,6 @@ Este jogo foi desenvolvido para o trabalho da disciplina de Redes de Computadore
 
 O programa requer o compilador gcc e a versão C++17 da linguagem C++. Ademais, é compátivel com os seguintes sistemas operacionais:
 - Ubuntu 20.04.2 LTS
-- ...
 
 ## Como compilar
 
