@@ -3,51 +3,68 @@
 #include "spdlog/spdlog.h"
 
 namespace Pong {
+
+/**
+ * Server's game engine.
+ */
 #if SERVER
     Pong::Pong(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) : server(ServerIp, UDPServerPort, TCPServerPort) {
         sAppName = "Pong -- Server";
     }
 
+    /**
+     * Function called after the instantiation of the Pong class, responsible for setting up the conections.
+     */
     bool Pong::OnUserCreate() {
         bool create = false;
 
+        // the connections are set up by a thread so that the program doesn't block while
+        // waiting for the clients
         setup_connections = std::thread(&Pong::SetUpConnections, this);
         setup_connections.detach();
 
         return true;
     }
 
+    /**
+     * Sets up the UDP and TCP connections with the clients.
+     */
     void Pong::SetUpConnections() {
         for (int client = Network::Server::ClientOne; client <= Network::Server::ClientTwo; client++) {
             spdlog::info("Waiting for player {}...", client + 1);
-            if (server.AcceptClient(client) == FAIL)
+            if (server.AcceptClient(client) == FAIL)    // connect to clients
                 return;
             spdlog::info("Connected to player {}!", client + 1);
         }
         spdlog::info("Starting the game...");
-        server.StartListeningUDP();
+        server.StartListeningUDP();     // start listening to messages sent by the clients through the UDP connection
 
-        Init();
+        Init();     // configures the game
         create = true;
         spdlog::info("Game started!");
     }
 
+    /**
+     * Called at each new frame. Manages game processing.
+     */
     bool Pong::OnUserUpdate(float fElapsedTime) {
-        // When OnUserUpdate returns false the PixelGameEngine exits (calls on UserDestroy)
+        
+        // if the game has ended...
         if (server.GetQuit()) {
             spdlog::info("Starting to close...");
-            return false;
+            return false;   // when OnUserUpdate returns false the PixelGameEngine exits (calls on UserDestroy)
         }
 
         Clear(olc::BLACK);
-        // Only start the game after both clients connected
+
+        // only start the game after both clients connected
         if (!create) {
             std::string status = "Waiting for Players";
             DrawString(ScreenWidth() / 2 - GetTextSize(status).x, ScreenHeight() / 2 - GetTextSize(status).y, status, olc::GREEN, 2);
             return true;
         }
 
-        // User input
+        // get user input and move the players accordingly
         if (server.GetKey(Network::Server::W))
             players[PlayerOne]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
 
@@ -60,12 +77,13 @@ namespace Pong {
         if (server.GetKey(Network::Server::DOWN))
             players[PlayerTwo]->Move(olc::vf2d(0, +Player::Player::speed * fElapsedTime));
 
-        // Moves the ball
+        // moves the ball
         ball->Move(fElapsedTime);
 
-        // Checks whether the ball colided with the players
+        // checks whether the ball colided with the players
         ball->CheckCollision(players[PlayerOne]->Position(), players[PlayerTwo]->Position(), score);
 
+        // packs the game configuration in a message
         server.msg.xPlayer1 = players[PlayerOne]->Position().x;
         server.msg.yPlayer1 = players[PlayerOne]->Position().y;
         server.msg.xPlayer2 = players[PlayerTwo]->Position().x;
@@ -74,10 +92,12 @@ namespace Pong {
         server.msg.yBall = ball->Position().y;
         server.msg.scorePlayer1 = score[PlayerOne];
         server.msg.scorePlayer2 = score[PlayerTwo];
-
+        
+        // sends the game configuration to the clients through the UDP conection
         server.SendPosition(Network::Server::ClientOne);
         server.SendPosition(Network::Server::ClientTwo);
 
+        // prints the players IP addresses and their scores on the screen
         std::string playersIp = server.GetClientsIp();
         DrawString(ScreenWidth() / 2 - GetTextSize(playersIp).x, int32_t(PADDING), playersIp, olc::GREEN, 2);
 
@@ -91,17 +111,18 @@ namespace Pong {
     }
 
     /***
-	 * Called when the user clicks the exit button or when a client disconnected. 
+	 * Called when the game ends, both when the user clicks the server's exit button 
+     * and when a client disconnects (or his connection times out). 
 	 * Announces to the clients that the game has ended.
 	***/
     bool Pong::OnUserDestroy() {
         spdlog::info("Disconnecting...");
-        server.QuitListener();
+        server.QuitListener();  // terminate the threads listening to the UDP and TCP connection
 
         for (int client = Network::Server::ClientOne; client <= Network::Server::ClientTwo; client++) {
-            if (server.IsClientConnected(client)) {
+            if (server.IsClientConnected(client)) {     // if the client is connected...
                 spdlog::info("Asking player {} to disconnect...", client + 1);
-                server.AnnounceEnd(client);
+                server.AnnounceEnd(client);     // ...announce that the game has ended
                 spdlog::info("Player {} disconnected!", client + 1);
             }
         }
@@ -109,19 +130,26 @@ namespace Pong {
         return true;
     }
 
+/**
+ * Client's game engine.
+ */
 #elif CLIENT
     Pong::Pong(const std::string& ServerIp, const std::string& UDPServerPort, const std::string& TCPServerPort) : client(ServerIp, UDPServerPort, TCPServerPort) {
         sAppName = "Pong -- Client";
     }
 
+    /**
+     * Function called after the instantiation of the Pong class, responsible for connecting to the server.
+     */
     bool Pong::OnUserCreate() {
-        if (client.Connect() == FAIL)
+        if (client.Connect() == FAIL)   // connects to the server
             exit(EXIT_FAILURE);
 
-        client.StartListening();
+        client.StartListening();    // start listening for messages sent by the server
 
-        Init();
+        Init();     // configures the game
 
+        // game start configuration
         client.msg.xPlayer1 = players[PlayerOne]->Position().x;
         client.msg.yPlayer1 = players[PlayerOne]->Position().y;
         client.msg.xPlayer2 = players[PlayerTwo]->Position().x;
@@ -134,40 +162,49 @@ namespace Pong {
         return true;
     }
 
+    /**
+     * Called at each new frame. Manages game processing.
+     */
     bool Pong::OnUserUpdate(float fElapsedTime) {
-        // When OnUserUpdate returns false the PixelGameEngine exits
+        
+        // if the game has ended...
         if (client.GetQuit()) {
             spdlog::info("Quitting...");
-            return false;
+            return false;   // when OnUserUpdate returns false the PixelGameEngine exits
         }
 
-        // User input
+        // reads user input
         client.SetKey(Network::Client::UP, GetKey(olc::Key::UP).bHeld);
         client.SetKey(Network::Client::DOWN, GetKey(olc::Key::DOWN).bHeld);
+        // sends user input to the server through the UDP connection
         client.SendKeys();
 
+        // updates the game configuration according to the message received from the server 
         UpdatePositions();
 
-        // Clears the screen
+        // xlears the screen
         Clear(olc::BLACK);
 
-        // Display the scenario
+        // display the scenario
         DrawRect(0, 0, ScreenWidth() - BORDER, ScreenHeight() - BORDER, olc::GREEN);
         DrawDivision();
 
-        // Display the score
+        // display the score
         std::string scoreLine[2] = {std::string("Player 1: ") + std::to_string(score[PlayerOne]), std::string("Player 2: ") + std::to_string(score[PlayerTwo])};
         DrawString(ScreenWidth() / 4 - GetTextSize(scoreLine[PlayerOne]).x, int32_t(PADDING), scoreLine[PlayerOne], olc::GREEN, 2);
         DrawString(3 * ScreenWidth() / 4 - GetTextSize(scoreLine[PlayerTwo]).x, int32_t(PADDING), scoreLine[PlayerTwo], olc::GREEN, 2);
 
-        // Displays entities
+        // displays entities
         players[PlayerOne]->Draw();
         players[PlayerTwo]->Draw();
         ball->Draw();
 
         return true;
     }
-
+    
+    /**
+     * Updates the player configuration (positioning of th eplayers and the ball and the current scores).
+     */
     void Pong::UpdatePositions() {
         players[PlayerOne]->SetPosition(client.msg.xPlayer1, client.msg.yPlayer1);
         players[PlayerTwo]->SetPosition(client.msg.xPlayer2, client.msg.yPlayer2);
@@ -177,26 +214,33 @@ namespace Pong {
     }
 
     /***
-	 * Called when the user clicks the exit button or the server exits. 
-	 * Announces to the server that the game has ended if the former is true.
+	 * Called when the game ends, both when the user clicks the client's exit button 
+     * and when a server disconnects (or his connection times out). 
+	 * Announces to the clients that the game has ended.
 	***/
     bool Pong::OnUserDestroy() {
         spdlog::info("Disconnecting...");
-        client.QuitListener();
+        client.QuitListener();      // terminate the threads listening to the UDP and TCP connection
 
-        if (!client.GetServerQuit()) {  // the quitting action didn't start with the server
+        if (!client.GetServerQuit()) {  // the quitting action started by self
             spdlog::info("Telling the server to quit...");
-            client.AnnounceEnd();
+            client.AnnounceEnd();   // accounce to the server that the game has ended
             spdlog::info("Told server to quit!");
         }
         return true;
     }
 
+/**
+ * Offline game engine.
+ */
 #else
     Pong::Pong() {
         sAppName = "Pong";
     }
 
+    /**
+     * Called after instantiation of the Pong class, responsible for setting up the game.
+     */
     bool Pong::OnUserCreate() {
         Init();
 
@@ -204,8 +248,11 @@ namespace Pong {
         return true;
     }
 
+    /**
+     * Called at each new frame. Manages game processing.
+     */
     bool Pong::OnUserUpdate(float fElapsedTime) {
-        // User input
+        // user input
         if (GetKey(olc::Key::W).bHeld)
             players[PlayerOne]->Move(olc::vf2d(0, -Player::Player::speed * fElapsedTime));
 
@@ -218,25 +265,25 @@ namespace Pong {
         if (GetKey(olc::Key::DOWN).bHeld)
             players[PlayerTwo]->Move(olc::vf2d(0, +Player::Player::speed * fElapsedTime));
 
-        // Moves the ball
+        // moves the ball
         ball->Move(fElapsedTime);
 
-        // Checks whether the ball colided with the players
+        // checks whether the ball colided with the players
         ball->CheckCollision(players[PlayerOne]->Position(), players[PlayerTwo]->Position(), score);
 
-        // Clears the screen
+        // clears the screen
         Clear(olc::BLACK);
 
-        // Display the scenario
+        // display the scenario
         DrawRect(0, 0, ScreenWidth() - BORDER, ScreenHeight() - BORDER, olc::GREEN);
         DrawDivision();
 
-        // Display the score
+        // display the score
         std::string scoreLine[2] = {std::string("Player 1: ") + std::to_string(score[PlayerOne]), std::string("Player 2: ") + std::to_string(score[PlayerTwo])};
         DrawString(ScreenWidth() / 4 - GetTextSize(scoreLine[PlayerOne]).x, int32_t(PADDING), scoreLine[PlayerOne], olc::GREEN, 2);
         DrawString(3 * ScreenWidth() / 4 - GetTextSize(scoreLine[PlayerTwo]).x, int32_t(PADDING), scoreLine[PlayerTwo], olc::GREEN, 2);
 
-        // Displays entities
+        // displays entities
         players[PlayerOne]->Draw();
         players[PlayerTwo]->Draw();
         ball->Draw();
@@ -247,6 +294,9 @@ namespace Pong {
 
     Pong::~Pong() {}
 
+    /**
+     * Initializes game entities.
+     */
     void Pong::Init() {
         players[PlayerOne] = std::make_unique<Player::Player>(Player::PlayerOne, *this);
         players[PlayerTwo] = std::make_unique<Player::Player>(Player::PlayerTwo, *this);
@@ -256,6 +306,9 @@ namespace Pong {
         score = {0, 0};
     }
 
+    /**
+     * Draws the dashed screen division.
+     */
     void Pong::DrawDivision() {
         int n = int(float(ScreenHeight()) / float(DIV_SIZE));
         int x = ScreenWidth() / 2 - DIV_SIZE / 4;

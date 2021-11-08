@@ -3,7 +3,14 @@
 
 #include "spdlog/spdlog.h"
 
+/**
+ * Namespace that contains some useful methods used by both the clients and server.
+ */
 namespace Pong::Network {
+
+    /**
+     * Checks the validity of the provided port.
+     */
     int ConvertPort(const std::string& port) {
         int ret_port;
 
@@ -22,6 +29,9 @@ namespace Pong::Network {
         return ret_port;
     }
 
+    /**
+     * Checks the validity of the provided IP address.
+     */
     in_addr_t ConvertIp(const std::string& ip) {
         in_addr_t convertedIp;
         auto errCode = inet_pton(AF_INET, ip.c_str(), (void*)&convertedIp);
@@ -39,6 +49,10 @@ namespace Pong::Network {
 }  // namespace Pong::Network
 
 namespace Pong::Network::GameInfo {
+    /**
+     * Convert the fields of the message that it will be sent by the server from host byte
+     * order to network byte order.
+     */
     void GameInfo::Serialize() {
         xPlayer1 = htonl(xPlayer1);
         yPlayer1 = htonl(yPlayer1);
@@ -49,6 +63,10 @@ namespace Pong::Network::GameInfo {
         scorePlayer1 = htonl(scorePlayer1);
         scorePlayer2 = htonl(scorePlayer2);
     }
+
+    /**
+     * Convert the fields of the struct back to host byte order.
+     */
     void GameInfo::Deserialize() {
         xPlayer1 = ntohl(xPlayer1);
         yPlayer1 = ntohl(yPlayer1);
