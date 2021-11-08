@@ -48,11 +48,13 @@ Por padrão é utlizado o *local host* e as portas supracitadas.
 
 Foi adotada uma arquitetura de rede centralizada, em que os clientes comunicam-se diretamente com o servidor, responsável pelo processamento do jogo.
 
-A comunicação é iniciada por um cliente, que estabelece uma conexão TCP com o servidor a fim de participar do jogo. Se a conexão for realizada com sucesso, o servidor responde com o número de jogador que foi atribuído a esse cliente. A conexão TCP é utilizada apenas para fins de controle, em que é essencial garantir o recebimento da mensagem.
+A comunicação é iniciada por um cliente, que estabelece uma conexão TCP com o servidor a fim de participar do jogo. Se a conexão for realizada com sucesso, o servidor responde com o número de jogador que foi atribuído a esse cliente. A conexão TCP é utilizada apenas para mensagens de controle (como encerramento do jogo), em que é essencial garantir o recebimento da mensagem.
 
 Uma vez estabelecida a conexão TCP, deve ser estabelecida uma conexão UDP, por meio da qual transitarão os dados do jogo. Para isso, o cliente envia uma mensagem UDP ao servidor informando o seu número de jogador.
+
+Vale ressaltar que foi estipulado um intervalo de *connection timeout*, de modo que, uma vez estabelecida a conexão e iniciado o jogo, se este intervalo de tempo for extrapolado sem que o servidor (cliente) receba dados do cliente (servidor), o jogo é encerrado. 
  
-### Conexão
+### Estabelecimento da conexão
 
 - **Cliente** inicia conexão TCP com o servidor para participar do jogo.
 - **Servidor** responde com *player number* do cliente:
@@ -80,4 +82,4 @@ Fechando uma das janelas, seja do servidor, seja de um dos clientes, é enviada 
 
 ## Debug
 
-Ao invés de só usar `cmake ..` use `cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..`. Não se esqueça de deletar o cacho quando quiser trocar de tipo de build.
+Ao invés de só usar `cmake ..` use `cmake -DCMAKE_BUILD_TYPE:STRING=Debug ..`. Não se esqueça de deletar o cache quando quiser trocar de tipo de build.
