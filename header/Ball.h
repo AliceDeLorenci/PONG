@@ -14,25 +14,22 @@ namespace Pong::Ball {
 
     class Ball {
      private:
-        // The gamespace
-        olc::PixelGameEngine& pge;
+        olc::PixelGameEngine& pge;                          // Game engine
 
-        // Random Number Generator
-        std::uniform_real_distribution<float> distY;      // (0 ~ ScreenHeight())
-        std::uniform_real_distribution<float> distAngle;  // (pi/4 ~ 3pi/4)
-        std::bernoulli_distribution distDirection;        // (0, 1) * PI
+        // Random number generators
+        std::uniform_real_distribution<float> distY;        // (0 ~ ScreenHeight())
+        std::uniform_real_distribution<float> distAngle;    // (pi/4 ~ 3pi/4)
+        std::bernoulli_distribution distDirection;          // (0, 1) * PI
 
-        olc::vf2d position;   // Anchor on top left corner
-        olc::vf2d direction;  // Movement direction (normalized)
-        float curSpeed;       // Speed magnitude
+        olc::vf2d position;                                 // Relative to anchor on top left corner
+        olc::vf2d direction;                                // Movement direction (normalized)
+        float curSpeed;                                     // Speed magnitude
 
      public:
-        /// Size in pixels
-        static const olc::vi2d size;
+        static const olc::vi2d size;      // Size in pixels
 
      private:
-        // Repositions the ball
-        void Reset();
+        void Reset();                     // Repositions the ball
 
      public:
         Ball(olc::PixelGameEngine&);

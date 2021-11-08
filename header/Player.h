@@ -14,13 +14,13 @@ namespace Pong::Player {
 
     class Player {
      private:
-        olc::PixelGameEngine& pge;
-        olc::vf2d position;  // Anchor on top left corner
-        PlayerNum number;
+        olc::PixelGameEngine& pge;          // Game engine
+        olc::vf2d position;                 // Relative to anchor on top left corner
+        PlayerNum number;                   // Player number
 
      public:
-        static const olc::vi2d size;  // Player size in pixels
-        static const float speed;     // Player speed magnitude
+        static const olc::vi2d size;        // Player size in pixels
+        static const float speed;           // Player speed magnitude
 
         Player(const PlayerNum playerNumber, olc::PixelGameEngine& game);
         virtual ~Player();

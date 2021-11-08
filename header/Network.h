@@ -11,8 +11,10 @@
 
 namespace Pong::Network {
     constexpr int FAIL = 1;
-    constexpr int MAXLINE = 1024;
-    constexpr int TIMEOUT = 1000;
+    constexpr int MAXLINE = 1024;       // maximum buffer size for the messages sent and received through the network
+    constexpr int TIMEOUT = 1000;       // connection timeout interval
+
+    // default IP address and ports
     static constexpr const char* LOCALHOST = "127.0.0.1";
     static constexpr const char* DEFAULT_UDP_PORT = "1234";
     static constexpr const char* DEFAULT_TCP_PORT = "1235";
@@ -20,11 +22,14 @@ namespace Pong::Network {
     enum Connections { UDP,
                        TCP };
 
+    // IP address and port validation functionalities
     int ConvertPort(const std::string&);
     in_addr_t ConvertIp(const std::string&);
+
 }  // namespace Pong::Network
 
 namespace Pong::Network::GameInfo {
+    // struct sent by the server to the client containing the current game configuration
     struct GameInfo {
         int xPlayer1;
         int yPlayer1;
@@ -35,6 +40,7 @@ namespace Pong::Network::GameInfo {
         int scorePlayer1;
         int scorePlayer2;
 
+        // convert to and from network byte order
         void Serialize();
         void Deserialize();
     };
