@@ -111,6 +111,9 @@ namespace Pong::Network::Client {
         using namespace std::chrono;
         high_resolution_clock::time_point last_contact;
 
+        // temporary variable used to store the message received from the server
+        GameInfo::GameInfo temp;
+
         while (!quit_listener) {
 
             // if the server connection timed out, quit
@@ -124,7 +127,7 @@ namespace Pong::Network::Client {
             }
 
             socklen_t len = sizeof(server_addr[UDP]);
-            int n = recvfrom(sockets[UDP], &msg, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr[UDP], &len);
+            int n = recvfrom(sockets[UDP], &temp, sizeof(Pong::Network::GameInfo::GameInfo), MSG_WAITALL, (struct sockaddr*)&server_addr[UDP], &len);
             
             // since it is a nonblocking socket we must check if there was a message or not
             if( n == -1 ) 
@@ -140,7 +143,9 @@ namespace Pong::Network::Client {
             last_contact = high_resolution_clock::now();
 
             // convert the message to host byte order
-            msg.Deserialize();
+            temp.Deserialize();
+            msg = temp;
+            
             spdlog::trace("Received from server using UDP: {} {} {} {} {} {} {} {}", msg.xPlayer1, msg.yPlayer1, msg.xPlayer2, msg.yPlayer2, msg.xBall, msg.yBall, msg.scorePlayer1, msg.scorePlayer2);
         }
     }
